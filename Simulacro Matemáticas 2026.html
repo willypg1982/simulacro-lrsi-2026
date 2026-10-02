@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prueba de Matemáticas - Bachillerato / MEP</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --secondary: #0d9488;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #cbd5e1;
+      --correct: #16a34a;
+      --correct-bg: #dcfce7;
+      --wrong: #dc2626;
+      --wrong-bg: #fee2e2;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 1.2rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .header-content {
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    button {
+      border: none;
+      padding: 0.6rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #f59e0b; color: #1e293b; }
+    .btn-primary:hover { background: #d97706; color: white; }
+    .btn-pdf { background: #ffffff; color: var(--primary); }
+    .btn-pdf:hover { background: #f1f5f9; }
+    .btn-sheet { background: #38bdf8; color: #082f49; }
+    .btn-sheet:hover { background: #0284c7; color: white; }
+
+    .score-badge {
+      background: rgba(255,255,255,0.25);
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    main { max-width: 950px; margin: 1.8rem auto; padding: 0 1rem; }
+
+    .question-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-bottom: 1.6rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      page-break-inside: avoid;
+    }
+    .q-header-text { font-size: 1rem; line-height: 1.6; margin-bottom: 0.6rem; }
+    .q-number { font-weight: 800; color: var(--primary); }
+    .q-footer-text { font-size: 1rem; line-height: 1.6; margin-top: 0.6rem; margin-bottom: 1rem; font-weight: 500; }
+    
+    .diagram-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0.8rem 0;
+      background: #fafafa;
+      padding: 0.8rem;
+      border-radius: 6px;
+      border: 1px dashed var(--border);
+    }
+    .diagram-container svg { max-width: 100%; height: auto; }
+
+    .exam-table {
+      width: 100%;
+      max-width: 520px;
+      margin: 0.8rem auto;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      background: white;
+    }
+    .exam-table th, .exam-table td {
+      border: 1px solid #94a3b8;
+      padding: 0.45rem 0.75rem;
+      text-align: center;
+    }
+    .exam-table th { background: #f1f5f9; font-weight: 700; }
+
+    .options { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #ffffff;
+    }
+    .option-label:hover { background: #f8fafc; border-color: #94a3b8; }
+    input[type="radio"] { width: 1.25rem; height: 1.25rem; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+
+    .feedback {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      display: none;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .correct-feedback { background: var(--correct-bg); color: #14532d; border-left: 4px solid var(--correct); }
+    .wrong-feedback { background: var(--wrong-bg); color: #7f1d1d; border-left: 4px solid var(--wrong); }
+
+    /* Modal Hoja de Respuestas */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .modal-content {
+      background: white;
+      width: 100%;
+      max-width: 850px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.6rem;
+      margin: 1.5rem 0;
+    }
+    .sheet-row {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: #f8fafc;
+      padding: 0.4rem;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.85rem;
+    }
+    .bubble {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .bubble.selected { background: #1e293b; color: white; border-color: #1e293b; }
+    .bubble.correct { background: var(--correct); color: white; border-color: var(--correct); }
+    .bubble.wrong { background: var(--wrong); color: white; border-color: var(--wrong); }
+
+    /* ==================== ESTILOS DE LA PORTADA ==================== */
+    .exam-cover-page {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+    .cover-header {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid var(--primary);
+    }
+    .cover-header-img {
+      width: 100%;
+      max-width: 920px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .cover-title-box {
+      text-align: center;
+      margin-bottom: 1.4rem;
+    }
+    .cover-institution {
+      color: var(--primary);
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .cover-subtitle {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+      font-weight: 500;
+    }
+    .cover-main-title {
+      font-size: 1.9rem;
+      color: #0f172a;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      margin-top: 0.6rem;
+    }
+    .cover-exam-type {
+      font-size: 1rem;
+      color: var(--secondary);
+      font-weight: 700;
+      margin-top: 0.2rem;
+    }
+    .cover-teacher-badge {
+      display: inline-block;
+      margin-top: 0.7rem;
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 0.45rem 1.2rem;
+      border-radius: 9999px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    /* Caja de datos del estudiante */
+    .cover-student-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.4rem;
+    }
+    .cover-field {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+    }
+    .cover-field.full-width {
+      width: 100%;
+    }
+    .cover-field.full-width .screen-input {
+      flex: 1;
+    }
+    .cover-row-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 0;
+    }
+    .cover-row-fields .cover-field {
+      margin-bottom: 0;
+    }
+    .screen-input {
+      padding: 0.45rem 0.8rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .screen-input:focus {
+      border-color: var(--primary);
+    }
+    .print-text {
+      display: none;
+    }
+    .cover-badge-conv {
+      background: #e2e8f0;
+      color: #334155;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    /* Tabla de Especificaciones y Calificación */
+    .cover-specs-table-wrapper {
+      margin-bottom: 1.4rem;
+      overflow-x: auto;
+    }
+    .cover-specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .cover-specs-table th {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 0.65rem 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid #1e3a8a;
+    }
+    .cover-specs-table td {
+      padding: 0.75rem 0.5rem;
+      border: 1px solid #cbd5e1;
+      font-size: 0.95rem;
+    }
+    .cover-specs-table td.highlight-cell {
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .status-pending {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+    }
+    .status-approved {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #16a34a;
+    }
+    .status-failed {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #dc2626;
+    }
+
+    /* Instrucciones */
+    .cover-instructions-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid var(--secondary);
+      border-radius: 6px;
+      padding: 1.1rem 1.3rem;
+      margin-bottom: 1.4rem;
+    }
+    .instructions-title {
+      color: var(--primary);
+      font-size: 0.98rem;
+      margin-bottom: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .instructions-list {
+      margin-left: 1.2rem;
+      color: #334155;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    .instructions-list li {
+      margin-bottom: 0.4rem;
+    }
+
+    /* Firmas */
+    .cover-signatures-box {
+      display: flex;
+      justify-content: space-around;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      padding-top: 0.5rem;
+    }
+    .sig-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 40%;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    .sig-line {
+      width: 100%;
+      border-bottom: 1.5px solid #64748b;
+      margin-bottom: 0.4rem;
+      height: 35px;
+    }
+
+    /* ==================== TABLA DEL EXAMEN ==================== */
+    .print-page-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+    }
+    .print-page-table > thead {
+      display: block;
+    }
+    .print-page-table > tbody {
+      display: block;
+    }
+    .print-page-table > thead > tr,
+    .print-page-table > tbody > tr {
+      display: block;
+    }
+    .print-page-table > thead > tr > td,
+    .print-page-table > tbody > tr > td {
+      display: block;
+      padding: 0;
+      border: none;
+    }
+
+    .institutional-header {
+      width: 100%;
+      background: #ffffff;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .institutional-header img {
+      width: 100%;
+      max-width: 920px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* En pantalla se oculta el thead de la tabla de preguntas porque la portada ya incluye el encabezado */
+    @media screen {
+      .print-page-table > thead {
+        display: none;
+      }
+    }
+
+    /* ==================== IMPRESIÓN / PDF ==================== */
+    @media print {
+      @page {
+        size: letter portrait;
+        margin: 8mm 12mm 10mm 12mm;
+      }
+      header, .btn-group, .feedback, .modal { display: none !important; }
+      body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+      main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+      /* Portada de examen (Página 1 estricta) */
+      .exam-cover-page {
+        break-after: page !important;
+        page-break-after: always !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        min-height: 250mm !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+      }
+      .cover-header {
+        border-bottom: 2px solid #1e3a8a !important;
+        margin-bottom: 8px !important;
+        padding-bottom: 4px !important;
+      }
+      .cover-header-img {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      .cover-institution {
+        font-size: 1.2rem !important;
+        color: #1e3a8a !important;
+      }
+      .cover-subtitle {
+        font-size: 0.8rem !important;
+        color: #475569 !important;
+      }
+      .cover-main-title {
+        font-size: 1.6rem !important;
+        margin-top: 4px !important;
+        color: #000 !important;
+      }
+      .cover-exam-type {
+        font-size: 0.92rem !important;
+        color: #0d9488 !important;
+      }
+      .cover-teacher-badge {
+        background: #f8fafc !important;
+        border: 1px solid #64748b !important;
+        padding: 0.25rem 0.8rem !important;
+        font-size: 0.85rem !important;
+        margin-top: 4px !important;
+      }
+
+      /* Datos estudiante en impresión */
+      .cover-student-box {
+        background: transparent !important;
+        border: 1.5px solid #000 !important;
+        border-radius: 4px !important;
+        padding: 0.7rem 1rem !important;
+        margin-bottom: 8px !important;
+      }
+      .cover-field {
+        margin-bottom: 6px !important;
+        font-size: 0.88rem !important;
+      }
+      .screen-input {
+        display: none !important;
+      }
+      .print-text {
+        display: inline-block !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+      }
+      .cover-badge-conv {
+        background: transparent !important;
+        border: 1px solid #475569 !important;
+        padding: 0.15rem 0.5rem !important;
+        font-size: 0.78rem !important;
+      }
+
+      /* Tabla de especificaciones en impresión */
+      .cover-specs-table-wrapper {
+        margin-bottom: 8px !important;
+      }
+      .cover-specs-table {
+        border: 1.5px solid #000 !important;
+        border-radius: 0 !important;
+      }
+      .cover-specs-table th {
+        background: #f1f5f9 !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        padding: 0.4rem 0.3rem !important;
+        font-size: 0.78rem !important;
+      }
+      .cover-specs-table td {
+        border: 1px solid #000 !important;
+        padding: 0.4rem 0.3rem !important;
+        font-size: 0.85rem !important;
+      }
+      .status-badge {
+        border: 1px solid #000 !important;
+        padding: 0.15rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+
+      /* Instrucciones en impresión */
+      .cover-instructions-box {
+        background: transparent !important;
+        border: 1px solid #475569 !important;
+        border-left: 4px solid #1e3a8a !important;
+        border-radius: 4px !important;
+        padding: 0.6rem 0.9rem !important;
+        margin-bottom: 8px !important;
+      }
+      .instructions-title {
+        font-size: 0.85rem !important;
+        margin-bottom: 4px !important;
+      }
+      .instructions-list {
+        font-size: 0.78rem !important;
+        line-height: 1.4 !important;
+        margin-left: 1.1rem !important;
+      }
+      .instructions-list li {
+        margin-bottom: 2px !important;
+      }
+
+      /* Firmas */
+      .cover-signatures-box {
+        margin-top: 8px !important;
+        padding-top: 0 !important;
+      }
+      .sig-line {
+        border-bottom: 1px solid #000 !important;
+        height: 25px !important;
+      }
+      .sig-col {
+        font-size: 0.78rem !important;
+        color: #000 !important;
+      }
+
+      /* Tabla con encabezado repetitivo para las páginas 2 en adelante */
+      .print-page-table {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      .print-page-table > thead {
+        display: table-header-group !important;
+      }
+      .print-page-table > tbody {
+        display: table-row-group !important;
+      }
+      .print-page-table > thead > tr,
+      .print-page-table > tbody > tr {
+        display: table-row !important;
+      }
+      .print-page-table > thead > tr > td,
+      .print-page-table > tbody > tr > td {
+        display: table-cell !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+      .print-page-table > thead > tr > td {
+        padding-bottom: 10px !important;
+      }
+
+      .institutional-header {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 1.5px solid #1e3a8a !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 0 6px 0 !important;
+        margin: 0 0 10px 0 !important;
+      }
+      .institutional-header img {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+      }
+
+      .question-card {
+        border: none !important;
+        border-bottom: 1px solid #94a3b8 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 1.5rem !important;
+        padding: 0.6rem 0 !important;
+      }
+      .diagram-container {
+        background: white !important;
+        border: 1px solid #cbd5e1 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .exam-table {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .option-label {
+        border: none !important;
+        padding: 0.2rem 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .option-label::before { content: "○ " !important; font-size: 1.2rem !important; }
+      input[type="radio"] { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div>
+        <h2>Examen de Matemáticas (Bachillerato / MEP)</h2>
+        <p style="font-size: 0.85rem; opacity: 0.9;">Transcripción Fiel del Documento Original</p>
+      </div>
+      <div id="scoreBox" class="score-badge" style="display: none;">
+        Calificación: <span id="scoreText">0 / 60</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" onclick="gradeExam()">✔ Comprobar</button>
+        <button class="btn-sheet" onclick="openSheetModal()">📋 Hoja Respuestas</button>
+        <button class="btn-pdf" onclick="window.print()">📥 Imprimir / Guardar en PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==================== PORTADA DEL EXAMEN ==================== -->
+    <section class="exam-cover-page" id="examCoverPage">
+      <div class="cover-header">
+        <img src="encabezado.png" alt="Ministerio de Educación Pública - Liceo Rural San Isidro" class="cover-header-img">
+      </div>
+
+      <div class="cover-title-box">
+        <h3 class="cover-institution">LICEO RURAL SAN ISIDRO</h3>
+        <p class="cover-subtitle">Dirección Regional de Educación Los Santos • Circuito Escolar 03</p>
+        <h1 class="cover-main-title">SIMULACRO DE MATEMÁTICAS 2026</h1>
+        <p class="cover-exam-type">Prueba Formativa y Comprensiva de Bachillerato</p>
+        <div class="cover-teacher-badge">
+          <strong>Docente:</strong> Profesor William Pineda González
+        </div>
+      </div>
+
+      <!-- Datos de la Persona Estudiante -->
+      <div class="cover-student-box">
+        <div class="cover-field full-width">
+          <label><strong>Estudiante:</strong></label>
+          <input type="text" id="studentNameInput" class="screen-input" placeholder="Nombre completo de la persona estudiante..." oninput="syncStudentData()">
+          <span id="printStudentName" class="print-text">____________________________________________________________________</span>
+        </div>
+        <div class="cover-row-fields">
+          <div class="cover-field">
+            <label><strong>Sección:</strong></label>
+            <input type="text" id="studentSectionInput" class="screen-input" placeholder="Ej: 11-1" oninput="syncStudentData()">
+            <span id="printStudentSection" class="print-text">____________</span>
+          </div>
+          <div class="cover-field">
+            <label><strong>Fecha:</strong></label>
+            <input type="date" id="studentDateInput" class="screen-input" oninput="syncStudentData()">
+            <span id="printStudentDate" class="print-text">___ / ___ / 2026</span>
+          </div>
+          <div class="cover-field">
+            <label><strong>Convocatoria:</strong></label>
+            <span class="cover-badge-conv">Ordinaria 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Especificaciones y Calificación -->
+      <div class="cover-specs-table-wrapper">
+        <table class="cover-specs-table">
+          <thead>
+            <tr>
+              <th>Total Preguntas</th>
+              <th>Puntos Totales</th>
+              <th>Puntos Obtenidos</th>
+              <th>Porcentaje</th>
+              <th>Calificación Final</th>
+              <th>Condición</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>60 ítems</strong></td>
+              <td><strong>60 pts</strong></td>
+              <td class="highlight-cell"><span id="coverScorePts">____</span> / 60</td>
+              <td class="highlight-cell"><span id="coverScorePct">____</span> %</td>
+              <td class="highlight-cell"><span id="coverGrade">____</span></td>
+              <td><span id="coverStatusBadge" class="status-badge status-pending">Sin calificar</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Instrucciones Generales -->
+      <div class="cover-instructions-box">
+        <h4 class="instructions-title">📌 INSTRUCCIONES GENERALES</h4>
+        <ol class="instructions-list">
+          <li><strong>Estructura de la prueba:</strong> Este cuadernillo contiene <strong>60 preguntas de selección única</strong>, cada una con un valor de 1 punto (Total: 60 puntos).</li>
+          <li><strong>Opciones de respuesta:</strong> Cada pregunta presenta cuatro opciones identificadas con las letras <strong>(A, B, C, D)</strong>. Solamente <strong>una</strong> de ellas es la opción correcta.</li>
+          <li><strong>Lectura cuidadosa:</strong> Lea con detenimiento cada situación, enunciado, tabla y representación gráfica antes de seleccionar su respuesta definitiva.</li>
+          <li><strong>Materiales autorizados:</strong> Está permitido el uso de calculadora científica no programable, bolígrafo (tinta azul o negra) y lápiz para borradores.</li>
+          <li><strong>Desarrollo y cálculos:</strong> Puede utilizar los espacios en blanco del folleto para realizar sus procedimientos algebraicos, trazos y anotaciones.</li>
+          <li><strong>Hoja de Respuestas:</strong> Traslade oportunamente sus respuestas a la <strong>Hoja de Respuestas</strong> interactiva o física rellenando completamente el círculo respectivo.</li>
+          <li><strong>Tiempo estimado:</strong> Dispone de un tiempo máximo sugerido de <strong>180 minutos (3 horas)</strong>. Administre su ritmo de trabajo adecuadamente.</li>
+        </ol>
+      </div>
+
+      <!-- Firmas / Cierre -->
+      <div class="cover-signatures-box">
+        <div class="sig-col">
+          <div class="sig-line"></div>
+          <span>Firma de la Persona Estudiante</span>
+        </div>
+        <div class="sig-col">
+          <div class="sig-line"></div>
+          <span>Firma del Docente</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TABLA DEL EXAMEN (PREGUNTAS) ==================== -->
+    <table class="print-page-table">
+      <thead>
+        <tr>
+          <td>
+            <div class="institutional-header">
+              <img src="encabezado.png" alt="Ministerio de Educación Pública - Liceo Rural San Isidro" class="institutional-header-img">
+            </div>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div id="examContainer"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- Modal Hoja de Respuestas -->
+  <div id="sheetModal" class="modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Hoja de Respuestas</h3>
+        <button onclick="closeSheetModal()" style="background:#ef4444; color:white; padding: 0.4rem 0.8rem;">✕ Cerrar</button>
+      </div>
+      <p style="font-size: 0.85rem; color:#64748b; margin-top: 0.4rem;">
+        Sincronizada con el cuestionario en tiempo real.
+      </p>
+      <div id="sheetGrid" class="sheet-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    // Gráficos SVG idénticos a los del examen original
+    const svgs = {
+      q1_A: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <line x1="20" y1="130" x2="170" y2="130" stroke="#000" stroke-width="1.5"/><polygon points="170,127 175,130 170,133" fill="#000"/>
+        <line x1="30" y1="140" x2="30" y2="10" stroke="#000" stroke-width="1.5"/><polygon points="27,10 30,5 33,10" fill="#000"/>
+        <text x="172" y="134" font-size="10">x (este)</text><text x="35" y="14" font-size="10">y (norte)</text>
+        <text x="18" y="142" font-size="9">R</text>
+        <line x1="85" y1="130" x2="85" y2="65" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="30" y1="65" x2="85" y2="65" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="125" y1="130" x2="125" y2="65" stroke="#666" stroke-dasharray="2,2"/>
+        <circle cx="85" cy="65" r="40" fill="none" stroke="#000" stroke-width="1.5"/>
+        <circle cx="85" cy="65" r="2.5" fill="#000"/><text x="82" y="60" font-size="10">M</text>
+        <circle cx="125" cy="65" r="2.5" fill="#000"/>
+        <text x="80" y="142" font-size="9">28</text><text x="120" y="142" font-size="9">48</text><text x="12" y="68" font-size="9">18</text>
+      </svg>`,
+      q1_B: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <line x1="20" y1="130" x2="170" y2="130" stroke="#000" stroke-width="1.5"/><polygon points="170,127 175,130 170,133" fill="#000"/>
+        <line x1="30" y1="140" x2="30" y2="10" stroke="#000" stroke-width="1.5"/><polygon points="27,10 30,5 33,10" fill="#000"/>
+        <text x="172" y="134" font-size="10">x (este)</text><text x="35" y="14" font-size="10">y (norte)</text>
+        <text x="18" y="142" font-size="9">R</text>
+        <line x1="65" y1="130" x2="65" y2="55" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="30" y1="55" x2="65" y2="55" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="105" y1="130" x2="105" y2="55" stroke="#666" stroke-dasharray="2,2"/>
+        <circle cx="65" cy="55" r="40" fill="none" stroke="#000" stroke-width="1.5"/>
+        <circle cx="65" cy="55" r="2.5" fill="#000"/><text x="62" y="50" font-size="10">M</text>
+        <circle cx="105" cy="55" r="2.5" fill="#000"/>
+        <text x="60" y="142" font-size="9">18</text><text x="100" y="142" font-size="9">38</text><text x="12" y="58" font-size="9">28</text>
+      </svg>`,
+      q1_C: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <line x1="20" y1="130" x2="170" y2="130" stroke="#000" stroke-width="1.5"/><polygon points="170,127 175,130 170,133" fill="#000"/>
+        <line x1="30" y1="140" x2="30" y2="10" stroke="#000" stroke-width="1.5"/><polygon points="27,10 30,5 33,10" fill="#000"/>
+        <text x="172" y="134" font-size="10">x (este)</text><text x="35" y="14" font-size="10">y (norte)</text>
+        <text x="18" y="142" font-size="9">R</text>
+        <line x1="90" y1="130" x2="90" y2="85" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="30" y1="85" x2="90" y2="85" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="110" y1="130" x2="110" y2="85" stroke="#666" stroke-dasharray="2,2"/>
+        <circle cx="90" cy="85" r="20" fill="none" stroke="#000" stroke-width="1.5"/>
+        <circle cx="90" cy="85" r="2.5" fill="#000"/><text x="87" y="80" font-size="10">M</text>
+        <circle cx="110" cy="85" r="2.5" fill="#000"/>
+        <text x="85" y="142" font-size="9">28</text><text x="106" y="142" font-size="9">38</text><text x="12" y="88" font-size="9">18</text>
+      </svg>`,
+      q1_D: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <line x1="20" y1="130" x2="170" y2="130" stroke="#000" stroke-width="1.5"/><polygon points="170,127 175,130 170,133" fill="#000"/>
+        <line x1="30" y1="140" x2="30" y2="10" stroke="#000" stroke-width="1.5"/><polygon points="27,10 30,5 33,10" fill="#000"/>
+        <text x="172" y="134" font-size="10">x (este)</text><text x="35" y="14" font-size="10">y (norte)</text>
+        <text x="18" y="142" font-size="9">R</text>
+        <line x1="75" y1="130" x2="75" y2="60" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="30" y1="60" x2="75" y2="60" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="95" y1="130" x2="95" y2="60" stroke="#666" stroke-dasharray="2,2"/>
+        <circle cx="75" cy="60" r="20" fill="none" stroke="#000" stroke-width="1.5"/>
+        <circle cx="75" cy="60" r="2.5" fill="#000"/><text x="72" y="55" font-size="10">M</text>
+        <circle cx="95" cy="60" r="2.5" fill="#000"/>
+        <text x="70" y="142" font-size="9">18</text><text x="91" y="142" font-size="9">28</text><text x="12" y="63" font-size="9">28</text>
+      </svg>`,
+
+      q2: `<svg width="220" height="180" viewBox="0 0 220 180">
+        <line x1="25" y1="150" x2="190" y2="150" stroke="#000" stroke-width="1.5"/><polygon points="190,147 195,150 190,153" fill="#000"/>
+        <line x1="35" y1="160" x2="35" y2="20" stroke="#000" stroke-width="1.5"/><polygon points="32,20 35,15 38,20" fill="#000"/>
+        <text x="195" y="154" font-size="11">x (este)</text><text x="30" y="14" font-size="11">y (norte)</text>
+        <text x="20" y="160" font-size="10">B</text>
+        <line x1="90" y1="150" x2="90" y2="70" stroke="#666" stroke-dasharray="3,3"/>
+        <line x1="35" y1="70" x2="90" y2="70" stroke="#666" stroke-dasharray="3,3"/>
+        <circle cx="90" cy="70" r="24" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="90" cy="70" r="2.5" fill="#000"/><text x="94" y="68" font-size="11">J</text>
+        <text x="118" y="62" font-size="11">c</text>
+        <text x="86" y="165" font-size="10">6</text><text x="22" y="74" font-size="10">8</text>
+      </svg>`,
+
+      q4: `<svg width="200" height="180" viewBox="0 0 200 180">
+        <line x1="15" y1="120" x2="180" y2="120" stroke="#000" stroke-width="1.5"/><polygon points="180,117 185,120 180,123" fill="#000"/>
+        <line x1="120" y1="170" x2="120" y2="15" stroke="#000" stroke-width="1.5"/><polygon points="117,15 120,10 123,15" fill="#000"/>
+        <text x="185" y="125" font-size="12">x</text><text x="115" y="12" font-size="12">y</text>
+        <text x="124" y="132" font-size="11">O</text>
+        <circle cx="70" cy="70" r="32" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="70" cy="70" r="3" fill="#000"/><text x="62" y="65" font-size="11">D</text>
+        <line x1="120" y1="120" x2="70" y2="70" stroke="#2563eb" stroke-width="2"/>
+        <text x="40" y="55" font-size="11">c</text>
+      </svg>`,
+
+      q5: `<svg width="220" height="180" viewBox="0 0 220 180">
+        <line x1="25" y1="150" x2="190" y2="150" stroke="#000" stroke-width="1.5"/><polygon points="190,147 195,150 190,153" fill="#000"/>
+        <line x1="35" y1="160" x2="35" y2="20" stroke="#000" stroke-width="1.5"/><polygon points="32,20 35,15 38,20" fill="#000"/>
+        <text x="195" y="154" font-size="11">x (este)</text><text x="30" y="14" font-size="11">y (norte)</text>
+        <text x="22" y="160" font-size="10">P</text>
+        <line x1="105" y1="150" x2="105" y2="65" stroke="#666" stroke-dasharray="3,3"/>
+        <line x1="35" y1="65" x2="105" y2="65" stroke="#666" stroke-dasharray="3,3"/>
+        <circle cx="105" cy="65" r="26" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="105" cy="65" r="2.5" fill="#000"/><text x="96" y="62" font-size="11">G</text>
+        <text x="135" y="55" font-size="11">c</text>
+        <text x="98" y="165" font-size="10">12</text><text x="22" y="69" font-size="10">8</text>
+      </svg>`,
+
+      q8: `<svg width="200" height="190" viewBox="0 0 200 190">
+        <line x1="10" y1="95" x2="185" y2="95" stroke="#000" stroke-width="1.5"/><polygon points="185,92 190,95 185,98" fill="#000"/>
+        <line x1="95" y1="180" x2="95" y2="10" stroke="#000" stroke-width="1.5"/><polygon points="92,10 95,5 98,10" fill="#000"/>
+        <text x="190" y="99" font-size="12">x</text><text x="92" y="8" font-size="12">y</text>
+        <circle cx="95" cy="95" r="50" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="95" cy="95" r="2.5" fill="#000"/><text x="82" y="108" font-size="11">W</text>
+        <text x="148" y="62" font-size="11">c</text>
+        <text x="82" y="42" font-size="10">5</text><text x="75" y="152" font-size="10">-5</text>
+      </svg>`,
+
+      q10: `<svg width="220" height="190" viewBox="0 0 220 190">
+        <line x1="15" y1="60" x2="190" y2="60" stroke="#000" stroke-width="1.5"/><polygon points="190,57 195,60 190,63" fill="#000"/>
+        <line x1="90" y1="180" x2="90" y2="15" stroke="#000" stroke-width="1.5"/><polygon points="87,15 90,10 93,15" fill="#000"/>
+        <text x="195" y="64" font-size="12">x</text><text x="85" y="12" font-size="12">y</text>
+        <circle cx="60" cy="90" r="30" fill="none" stroke="#000" stroke-width="1.8"/>
+        <circle cx="60" cy="90" r="2.5" fill="#000"/><text x="47" y="94" font-size="11">O</text>
+        <circle cx="150" cy="60" r="3" fill="#000"/><text x="147" y="50" font-size="11">B</text>
+        <text x="145" y="74" font-size="10">17</text>
+        <line x1="60" y1="120" x2="90" y2="120" stroke="#666" stroke-dasharray="2,2"/>
+        <text x="95" y="124" font-size="10">-14</text>
+        <text x="24" y="105" font-size="11">c</text>
+      </svg>`,
+
+      q11: `<svg width="220" height="200" viewBox="0 0 220 200">
+        <line x1="20" y1="165" x2="190" y2="165" stroke="#000" stroke-width="1.2"/><polygon points="190,162 195,165 190,168" fill="#000"/>
+        <line x1="45" y1="190" x2="45" y2="20" stroke="#000" stroke-width="1.2"/><polygon points="42,20 45,15 48,20" fill="#000"/>
+        <text x="195" y="169" font-size="11">x</text><text x="40" y="15" font-size="11">y</text>
+        <circle cx="100" cy="100" r="45" fill="none" stroke="#000" stroke-width="1.8"/>
+        <line x1="30" y1="55" x2="180" y2="55" stroke="#000" stroke-width="1.5"/>
+        <text x="185" y="58" font-size="11">j</text><text x="25" y="53" font-size="10">40</text>
+        <line x1="30" y1="145" x2="180" y2="145" stroke="#000" stroke-width="1.5"/>
+        <text x="185" y="148" font-size="11">n</text><text x="28" y="143" font-size="10">8</text>
+        <line x1="100" y1="35" x2="100" y2="175" stroke="#000" stroke-width="1.5"/>
+        <text x="96" y="30" font-size="11">h</text>
+        <line x1="45" y1="45" x2="165" y2="165" stroke="#000" stroke-width="1.5"/>
+        <text x="55" y="38" font-size="11">k</text>
+      </svg>`,
+
+      q12: `<svg width="220" height="190" viewBox="0 0 220 190">
+        <line x1="20" y1="155" x2="190" y2="155" stroke="#000" stroke-width="1.5"/><polygon points="190,152 195,155 190,158" fill="#000"/>
+        <line x1="35" y1="170" x2="35" y2="20" stroke="#000" stroke-width="1.5"/><polygon points="32,20 35,15 38,20" fill="#000"/>
+        <text x="195" y="159" font-size="11">x</text><text x="32" y="15" font-size="11">y</text>
+        <polygon points="55,120 145,50 145,120 100,155" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="1.8"/>
+        <circle cx="55" cy="120" r="2.5" fill="#000"/><text x="43" y="117" font-size="10">A</text>
+        <circle cx="145" cy="50" r="2.5" fill="#000"/><text x="142" y="42" font-size="10">B</text>
+        <circle cx="145" cy="120" r="2.5" fill="#000"/><text x="150" y="124" font-size="10">C</text>
+        <circle cx="100" cy="155" r="2.5" fill="#000"/><text x="96" y="168" font-size="10">D</text>
+        <line x1="35" y1="50" x2="145" y2="50" stroke="#888" stroke-dasharray="2,2"/>
+        <line x1="35" y1="120" x2="55" y2="120" stroke="#888" stroke-dasharray="2,2"/>
+        <text x="20" y="54" font-size="10">10</text><text x="24" y="124" font-size="10">4</text>
+        <text x="52" y="168" font-size="10">2</text><text x="98" y="168" font-size="10">6</text><text x="140" y="168" font-size="10">10</text>
+      </svg>`,
+
+      q13: `<svg width="220" height="200" viewBox="0 0 220 200">
+        <g transform="translate(110, 100)" stroke="#000" stroke-width="1.8" fill="none">
+          <polygon points="0,-40 34.6,-20 34.6,20 0,40 -34.6,20 -34.6,-20" fill="#f8fafc"/>
+          <rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/>
+          <g transform="rotate(60)"><rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/></g>
+          <g transform="rotate(120)"><rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/></g>
+          <g transform="rotate(180)"><rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/></g>
+          <g transform="rotate(240)"><rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/></g>
+          <g transform="rotate(300)"><rect x="-17.3" y="-80" width="34.6" height="40" fill="#f1f5f9"/></g>
+        </g>
+        <text x="100" y="15" font-size="11" font-weight="bold">3 m</text>
+      </svg>`,
+
+      q15: `<svg width="230" height="180" viewBox="0 0 230 180">
+        <line x1="20" y1="150" x2="200" y2="150" stroke="#000" stroke-width="1.5"/><polygon points="200,147 205,150 200,153" fill="#000"/>
+        <line x1="35" y1="165" x2="35" y2="20" stroke="#000" stroke-width="1.5"/><polygon points="32,20 35,15 38,20" fill="#000"/>
+        <text x="205" y="154" font-size="11">x</text><text x="32" y="15" font-size="11">y</text>
+        <polygon points="60,125 120,45 180,125" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="2"/>
+        <circle cx="60" cy="125" r="3" fill="#000"/><text x="48" y="130" font-size="11">P</text>
+        <circle cx="120" cy="45" r="3" fill="#000"/><text x="117" y="38" font-size="11">R</text>
+        <circle cx="180" cy="125" r="3" fill="#000"/><text x="186" y="130" font-size="11">S</text>
+        <line x1="35" y1="45" x2="120" y2="45" stroke="#666" stroke-dasharray="2,2"/>
+        <line x1="120" y1="45" x2="120" y2="150" stroke="#666" stroke-dasharray="2,2"/>
+        <text x="24" y="48" font-size="10">5</text><text x="24" y="128" font-size="10">1</text>
+        <text x="58" y="164" font-size="10">1</text><text x="117" y="164" font-size="10">4</text><text x="177" y="164" font-size="10">7</text>
+      </svg>`,
+
+      q18: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <circle cx="90" cy="80" r="55" fill="none" stroke="#000" stroke-width="1.8"/>
+        <ellipse cx="90" cy="45" rx="42" ry="14" fill="#e2e8f0" stroke="#000" stroke-width="1.6"/>
+      </svg>`,
+
+      q19: `<svg width="210" height="190" viewBox="0 0 210 190">
+        <line x1="15" y1="95" x2="185" y2="95" stroke="#000" stroke-width="1.5"/><polygon points="185,92 190,95 185,98" fill="#000"/>
+        <line x1="95" y1="175" x2="95" y2="15" stroke="#000" stroke-width="1.5"/><polygon points="92,15 95,10 98,15" fill="#000"/>
+        <text x="190" y="99" font-size="11">x</text><text x="92" y="12" font-size="11">y</text>
+        <polygon points="45,95 95,45 140,95 95,145" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="1.8"/>
+        <circle cx="45" cy="95" r="3" fill="#000"/><text x="28" y="110" font-size="10">-4</text><text x="32" y="122" font-size="11">R</text>
+        <circle cx="95" cy="45" r="3" fill="#000"/><text x="100" y="42" font-size="11">S</text><text x="82" y="42" font-size="10">3</text>
+        <circle cx="140" cy="95" r="3" fill="#000"/><text x="142" y="110" font-size="11">T</text><text x="135" y="90" font-size="10">3</text>
+        <circle cx="95" cy="145" r="3" fill="#000"/><text x="100" y="150" font-size="11">U</text><text x="76" y="150" font-size="10">-4</text>
+      </svg>`,
+
+      q20: `<svg width="240" height="190" viewBox="0 0 240 190">
+        <line x1="20" y1="75" x2="215" y2="75" stroke="#000" stroke-width="1.2"/><polygon points="215,72 220,75 215,78" fill="#000"/>
+        <line x1="45" y1="175" x2="45" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="42,15 45,10 48,15" fill="#000"/>
+        <text x="220" y="79" font-size="11">x</text><text x="42" y="12" font-size="11">y</text>
+        <polygon points="90,55 75,130 130,165" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="1.6"/>
+        <polygon points="170,55 185,130 130,165" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="1.6"/>
+        <text x="87" y="48" font-size="10">A</text><text x="63" y="135" font-size="10">B</text>
+        <text x="127" y="177" font-size="10">C</text><text x="168" y="48" font-size="10">D</text><text x="189" y="135" font-size="10">E</text>
+        <line x1="130" y1="20" x2="130" y2="175" stroke="#ef4444" stroke-dasharray="3,3" stroke-width="1.5"/>
+        <text x="127" y="70" font-size="10" fill="#ef4444">5</text>
+        <text x="73" y="87" font-size="9">2</text><text x="87" y="87" font-size="9">3</text>
+        <text x="167" y="87" font-size="9">7</text><text x="182" y="87" font-size="9">8</text>
+        <text x="35" y="60" font-size="9">1</text><text x="28" y="132" font-size="9">-3</text><text x="28" y="167" font-size="9">-5</text>
+      </svg>`,
+
+      q21_main: `<svg width="180" height="150" viewBox="0 0 180 150">
+        <line x1="15" y1="50" x2="160" y2="50" stroke="#000" stroke-width="1.5"/><polygon points="160,47 165,50 160,53" fill="#000"/>
+        <line x1="90" y1="140" x2="90" y2="15" stroke="#000" stroke-width="1.5"/><polygon points="87,15 90,10 93,15" fill="#000"/>
+        <text x="165" y="54" font-size="11">x</text><text x="85" y="12" font-size="11">y</text>
+        <polygon points="50,50 90,50 90,115" fill="rgba(37,99,235,0.08)" stroke="#000" stroke-width="1.8"/>
+        <circle cx="50" cy="50" r="2.5" fill="#000"/><text x="32" y="45" font-size="10">-2</text><text x="38" y="60" font-size="10">D</text>
+        <circle cx="90" cy="50" r="2.5" fill="#000"/><text x="95" y="45" font-size="10">N</text>
+        <circle cx="90" cy="115" r="2.5" fill="#000"/><text x="95" y="118" font-size="10">-3</text><text x="80" y="125" font-size="10">W</text>
+      </svg>`,
+
+      q21_A: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="60" x2="140" y2="60" stroke="#000" stroke-width="1.2"/><line x1="75" y1="110" x2="75" y2="10" stroke="#000" stroke-width="1.2"/>
+        <polygon points="75,25 75,60 100,60" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="78" y="28" font-size="9">2</text><text x="78" y="105" font-size="9">-3</text>
+      </svg>`,
+      q21_B: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="60" x2="140" y2="60" stroke="#000" stroke-width="1.2"/><line x1="45" y1="110" x2="45" y2="10" stroke="#000" stroke-width="1.2"/>
+        <polygon points="45,60 115,60 45,95" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="110" y="52" font-size="9">3</text><text x="28" y="98" font-size="9">-2</text>
+      </svg>`,
+      q21_C: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="80" x2="140" y2="80" stroke="#000" stroke-width="1.2"/><line x1="75" y1="110" x2="75" y2="10" stroke="#000" stroke-width="1.2"/>
+        <polygon points="75,80 35,80 75,30" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="80" y="32" font-size="9">3</text><text x="25" y="95" font-size="9">-2</text>
+      </svg>`,
+      q21_D: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="70" x2="140" y2="70" stroke="#000" stroke-width="1.2"/><line x1="85" y1="110" x2="85" y2="10" stroke="#000" stroke-width="1.2"/>
+        <polygon points="85,70 30,70 85,35" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="90" y="38" font-size="9">2</text><text x="22" y="85" font-size="9">-3</text>
+      </svg>`,
+
+      q24: `<div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+        <svg width="150" height="140" viewBox="0 0 150 140">
+          <line x1="10" y1="70" x2="140" y2="70" stroke="#000" stroke-width="1.2"/><line x1="75" y1="130" x2="75" y2="10" stroke="#000" stroke-width="1.2"/>
+          <line x1="20" y1="30" x2="130" y2="110" stroke="#000" stroke-width="2"/>
+          <line x1="30" y1="110" x2="120" y2="30" stroke="#000" stroke-width="2"/>
+          <text x="10" y="20" font-size="12" font-weight="bold">I.</text>
+        </svg>
+        <svg width="150" height="140" viewBox="0 0 150 140">
+          <line x1="10" y1="80" x2="140" y2="80" stroke="#000" stroke-width="1.2"/><line x1="75" y1="130" x2="75" y2="10" stroke="#000" stroke-width="1.2"/>
+          <polyline points="20,10 75,70 135,50" fill="none" stroke="#000" stroke-width="2"/>
+          <text x="10" y="20" font-size="12" font-weight="bold">II.</text>
+        </svg>
+      </div>`,
+
+      q26: `<svg width="240" height="170" viewBox="0 0 240 170">
+        <line x1="20" y1="110" x2="220" y2="110" stroke="#000" stroke-width="1.2"/><polygon points="220,107 225,110 220,113" fill="#000"/>
+        <line x1="40" y1="160" x2="40" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="37,15 40,10 43,15" fill="#000"/>
+        <text x="225" y="114" font-size="11">x</text><text x="36" y="12" font-size="11">y</text>
+        <polyline points="40,30 65,30 115,110 145,140 175,110 205,80" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="40" cy="30" r="2.5" fill="#000"/><text x="25" y="34" font-size="10">6</text>
+        <text x="25" y="84" font-size="10">2</text><line x1="40" y1="80" x2="205" y2="80" stroke="#bbb" stroke-dasharray="2,2"/>
+        <text x="20" y="144" font-size="10">-2</text>
+        <text x="63" y="123" font-size="9">2</text><text x="112" y="123" font-size="9">4</text>
+        <text x="142" y="123" font-size="9">6</text><text x="172" y="123" font-size="9">8</text>
+        <text x="202" y="123" font-size="9">10</text>
+      </svg>`,
+
+      q29: `<svg width="170" height="150" viewBox="0 0 170 150">
+        <line x1="15" y1="110" x2="150" y2="110" stroke="#000" stroke-width="1.2"/><polygon points="150,107 155,110 150,113" fill="#000"/>
+        <line x1="45" y1="140" x2="45" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="42,15 45,10 48,15" fill="#000"/>
+        <text x="155" y="114" font-size="11">x</text><text x="42" y="12" font-size="11">y</text>
+        <path d="M 45,90 Q 55,70 70,30" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="45" cy="90" r="3" fill="#000"/><text x="30" y="93" font-size="10">2</text>
+      </svg>`,
+
+      q29_A: `<svg width="140" height="120" viewBox="0 0 140 120">
+        <line x1="10" y1="85" x2="130" y2="85" stroke="#000" stroke-width="1.2"/><line x1="50" y1="115" x2="50" y2="10" stroke="#000" stroke-width="1.2"/>
+        <path d="M 50,70 Q 42,50 30,30" fill="none" stroke="#000" stroke-width="1.5"/><circle cx="50" cy="70" r="2.5" fill="#000"/><text x="54" y="73" font-size="9">2</text>
+      </svg>`,
+      q29_B: `<svg width="140" height="120" viewBox="0 0 140 120">
+        <line x1="10" y1="45" x2="130" y2="45" stroke="#000" stroke-width="1.2"/><line x1="55" y1="115" x2="55" y2="10" stroke="#000" stroke-width="1.2"/>
+        <path d="M 55,60 Q 60,80 80,105" fill="none" stroke="#000" stroke-width="1.5"/><circle cx="55" cy="60" r="2.5" fill="#000"/><text x="35" y="63" font-size="9">-2</text>
+      </svg>`,
+      q29_C: `<svg width="140" height="120" viewBox="0 0 140 120">
+        <line x1="10" y1="75" x2="130" y2="75" stroke="#000" stroke-width="1.2"/><line x1="75" y1="115" x2="75" y2="10" stroke="#000" stroke-width="1.2"/>
+        <path d="M 55,75 Q 40,65 20,55" fill="none" stroke="#000" stroke-width="1.5"/><circle cx="55" cy="75" r="2.5" fill="#000"/><text x="45" y="90" font-size="9">-2</text>
+      </svg>`,
+      q29_D: `<svg width="140" height="120" viewBox="0 0 140 120">
+        <line x1="10" y1="80" x2="130" y2="80" stroke="#000" stroke-width="1.2"/><line x1="40" y1="115" x2="40" y2="10" stroke="#000" stroke-width="1.2"/>
+        <path d="M 60,80 Q 75,65 105,60" fill="none" stroke="#000" stroke-width="1.5"/><circle cx="60" cy="80" r="2.5" fill="#000"/><text x="56" y="94" font-size="9">2</text>
+      </svg>`,
+
+      q30: `<svg width="240" height="170" viewBox="0 0 240 170">
+        <line x1="25" y1="140" x2="220" y2="140" stroke="#000" stroke-width="1.2"/><polygon points="220,137 225,140 220,143" fill="#000"/>
+        <line x1="40" y1="155" x2="40" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="37,15 40,10 43,15" fill="#000"/>
+        <text x="225" y="144" font-size="11">x</text><text x="36" y="12" font-size="11">y</text>
+        <polyline points="40,120 90,60 120,105 150,80 200,30" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <text x="85" y="153" font-size="9">2</text><text x="116" y="153" font-size="9">3</text>
+        <text x="146" y="153" font-size="9">4</text><text x="196" y="153" font-size="9">6</text>
+        <text x="18" y="124" font-size="9">8</text><text x="12" y="84" font-size="9">20</text><text x="12" y="34" font-size="9">32</text>
+      </svg>`,
+
+      q35: `<svg width="210" height="160" viewBox="0 0 210 160">
+        <line x1="15" y1="75" x2="190" y2="75" stroke="#000" stroke-width="1.2"/><polygon points="190,72 195,75 190,78" fill="#000"/>
+        <line x1="85" y1="145" x2="85" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="82,15 85,10 88,15" fill="#000"/>
+        <text x="195" y="79" font-size="11">x</text><text x="82" y="12" font-size="11">y</text>
+        <path d="M 40,115 Q 70,85 170,60" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="40" cy="115" r="3" fill="#000"/>
+        <text x="30" y="65" font-size="10">-3</text><text x="92" y="118" font-size="10">-2</text>
+      </svg>`,
+
+      q36_A: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="95" x2="135" y2="95" stroke="#000" stroke-width="1.2"/><line x1="30" y1="110" x2="30" y2="10" stroke="#000" stroke-width="1.2"/>
+        <line x1="50" y1="95" x2="90" y2="25" stroke="#000" stroke-width="1.8"/>
+        <text x="45" y="107" font-size="9">2</text><text x="88" y="107" font-size="9">6</text><text x="18" y="30" font-size="9">8</text>
+      </svg>`,
+      q36_B: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="95" x2="135" y2="95" stroke="#000" stroke-width="1.2"/><line x1="40" y1="110" x2="40" y2="10" stroke="#000" stroke-width="1.2"/>
+        <line x1="60" y1="25" x2="110" y2="95" stroke="#000" stroke-width="1.8"/>
+        <text x="56" y="107" font-size="9">2</text><text x="105" y="107" font-size="9">6</text><text x="25" y="30" font-size="9">8</text>
+      </svg>`,
+      q36_C: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="95" x2="135" y2="95" stroke="#000" stroke-width="1.2"/><line x1="30" y1="110" x2="30" y2="10" stroke="#000" stroke-width="1.2"/>
+        <line x1="30" y1="75" x2="115" y2="35" stroke="#000" stroke-width="1.8"/>
+        <circle cx="30" cy="75" r="2.5" fill="#000"/><circle cx="115" cy="35" r="2.5" fill="#000"/>
+        <text x="18" y="78" font-size="9">2</text><text x="18" y="38" font-size="9">6</text><text x="112" y="107" font-size="9">8</text>
+      </svg>`,
+      q36_D: `<svg width="150" height="120" viewBox="0 0 150 120">
+        <line x1="10" y1="95" x2="135" y2="95" stroke="#000" stroke-width="1.2"/><line x1="30" y1="110" x2="30" y2="10" stroke="#000" stroke-width="1.2"/>
+        <line x1="30" y1="35" x2="115" y2="75" stroke="#000" stroke-width="1.8"/>
+        <circle cx="30" cy="35" r="2.5" fill="#000"/><circle cx="115" cy="75" r="2.5" fill="#000"/>
+        <text x="18" y="38" font-size="9">6</text><text x="18" y="78" font-size="9">2</text><text x="112" y="107" font-size="9">8</text>
+      </svg>`,
+
+      q39: `<svg width="220" height="170" viewBox="0 0 220 170">
+        <line x1="20" y1="135" x2="200" y2="135" stroke="#000" stroke-width="1.2"/><polygon points="200,132 205,135 200,138" fill="#000"/>
+        <line x1="35" y1="155" x2="35" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="32,15 35,10 38,15" fill="#000"/>
+        <text x="205" y="139" font-size="11">x</text><text x="32" y="12" font-size="11">y</text>
+        <path d="M 35,110 Q 105,25 175,110" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="105" cy="68" r="2.5" fill="#000"/>
+        <line x1="35" y1="68" x2="105" y2="68" stroke="#888" stroke-dasharray="2,2"/>
+        <line x1="105" y1="68" x2="105" y2="135" stroke="#888" stroke-dasharray="2,2"/>
+        <text x="15" y="113" font-size="10">25</text><text x="15" y="72" font-size="10">75</text>
+        <text x="102" y="148" font-size="10">3</text><text x="172" y="148" font-size="10">6</text>
+      </svg>`,
+
+      q41: `<svg width="200" height="150" viewBox="0 0 200 150">
+        <line x1="15" y1="90" x2="180" y2="90" stroke="#000" stroke-width="1.2"/><polygon points="180,87 185,90 180,93" fill="#000"/>
+        <line x1="45" y1="140" x2="45" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="42,15 45,10 48,15" fill="#000"/>
+        <text x="185" y="94" font-size="11">x</text><text x="42" y="12" font-size="11">y</text>
+        <path d="M 49,20 Q 55,80 160,115" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="65" cy="90" r="3" fill="#000"/><text x="62" y="82" font-size="10">1</text>
+      </svg>`,
+
+      q44: `<svg width="220" height="180" viewBox="0 0 220 180">
+        <line x1="15" y1="95" x2="195" y2="95" stroke="#000" stroke-width="1.2"/><polygon points="195,92 200,95 195,98" fill="#000"/>
+        <line x1="90" y1="165" x2="90" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="87,15 90,10 93,15" fill="#000"/>
+        <text x="200" y="99" font-size="11">x</text><text x="86" y="12" font-size="11">y</text>
+        <line x1="30" y1="130" x2="120" y2="30" stroke="#2563eb" stroke-width="1.8"/>
+        <text x="105" y="42" font-size="10">v</text>
+        <line x1="75" y1="40" x2="105" y2="150" stroke="#16a34a" stroke-width="1.8"/>
+        <text x="70" y="40" font-size="10">r</text>
+        <line x1="80" y1="160" x2="150" y2="60" stroke="#d97706" stroke-width="1.8"/>
+        <text x="145" y="55" font-size="10">w</text>
+        <text x="35" y="90" font-size="9">-4</text><text x="70" y="108" font-size="9">-1</text><text x="135" y="108" font-size="9">3</text>
+        <text x="94" y="48" font-size="9">3</text><text x="94" y="85" font-size="9">1</text><text x="70" y="150" font-size="9">-4</text>
+      </svg>`,
+
+      q48: `<svg width="220" height="150" viewBox="0 0 220 150">
+        <line x1="15" y1="80" x2="195" y2="80" stroke="#000" stroke-width="1.2"/><polygon points="195,77 200,80 195,83" fill="#000"/>
+        <line x1="35" y1="140" x2="35" y2="15" stroke="#000" stroke-width="1.2"/><polygon points="32,15 35,10 38,15" fill="#000"/>
+        <text x="200" y="84" font-size="11">x</text><text x="32" y="12" font-size="11">y</text>
+        <path d="M 40,30 Q 55,75 180,105" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <text x="40" y="93" font-size="9">1</text><text x="60" y="93" font-size="9">3</text>
+        <text x="100" y="73" font-size="9">9</text><text x="165" y="73" font-size="9">27</text>
+        <text x="22" y="40" font-size="9">2</text><text x="22" y="65" font-size="9">1</text><text x="20" y="112" font-size="9">-1</text>
+      </svg>`,
+
+      q57: `<svg width="340" height="140" viewBox="0 0 340 140">
+        <line x1="30" y1="110" x2="320" y2="110" stroke="#000" stroke-width="1.2"/>
+        <text x="15" y="45" font-size="10" font-weight="bold">Casa M</text>
+        <line x1="80" y1="40" x2="140" y2="40" stroke="#000" stroke-width="1.5"/>
+        <line x1="210" y1="40" x2="250" y2="40" stroke="#000" stroke-width="1.5"/>
+        <rect x="140" y="25" width="40" height="30" fill="#94a3b8" stroke="#000" stroke-width="1.5"/>
+        <rect x="180" y="25" width="30" height="30" fill="#ffffff" stroke="#000" stroke-width="1.5"/>
+        <line x1="80" y1="30" x2="80" y2="50" stroke="#000" stroke-width="1.5"/>
+        <line x1="250" y1="30" x2="250" y2="50" stroke="#000" stroke-width="1.5"/>
+
+        <text x="15" y="85" font-size="10" font-weight="bold">Casa N</text>
+        <line x1="50" y1="80" x2="80" y2="80" stroke="#000" stroke-width="1.5"/>
+        <line x1="180" y1="80" x2="210" y2="80" stroke="#000" stroke-width="1.5"/>
+        <rect x="80" y="65" width="60" height="30" fill="#94a3b8" stroke="#000" stroke-width="1.5"/>
+        <rect x="140" y="65" width="40" height="30" fill="#ffffff" stroke="#000" stroke-width="1.5"/>
+        <line x1="50" y1="70" x2="50" y2="90" stroke="#000" stroke-width="1.5"/>
+        <line x1="210" y1="70" x2="210" y2="90" stroke="#000" stroke-width="1.5"/>
+
+        <text x="40" y="125" font-size="9">110</text><text x="70" y="125" font-size="9">130</text>
+        <text x="130" y="125" font-size="9">170</text><text x="170" y="125" font-size="9">200</text>
+        <text x="200" y="125" font-size="9">220</text><text x="240" y="125" font-size="9">250</text>
+        <text x="130" y="137" font-size="9">Consumo de energía</text>
+      </svg>`
+    };
+
+    // Tablas HTML idénticas
+    const tables = {
+      q37: `<table class="exam-table">
+        <tr><th>Mes</th><th>Cantidad de días</th><th>Monto total</th></tr>
+        <tr><td>Mayo</td><td>15</td><td>₡50 000</td></tr>
+        <tr><td>Septiembre</td><td>20</td><td>₡65 000</td></tr>
+      </table>`,
+      q46: `<table class="exam-table">
+        <tr><th>x</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+        <tr><th>g(x)</th><td>1</td><td>2</td><td>4</td><td>8</td><td>16</td><td>32</td></tr>
+      </table>`,
+      q47: `<table class="exam-table">
+        <tr><th>t</th><td>0</td><td>3</td><td>6</td><td>9</td><td>12</td><td>15</td></tr>
+        <tr><th>c(t)</th><td>2</td><td>6,5</td><td>11</td><td>15,5</td><td>20</td><td>24,5</td></tr>
+      </table>`,
+      q49: `<table class="exam-table">
+        <tr><th>Medida estadística</th><th>Valor</th></tr>
+        <tr><td>Moda</td><td>38</td></tr>
+        <tr><td>Media aritmética</td><td>52</td></tr>
+        <tr><td>Mediana</td><td>50</td></tr>
+        <tr><td>Primer Cuartil</td><td>44</td></tr>
+        <tr><td>Tercer Cuartil</td><td>60</td></tr>
+        <tr><td>Mínimo</td><td>30</td></tr>
+        <tr><td>Máximo</td><td>80</td></tr>
+      </table>`,
+      q51: `<table class="exam-table">
+        <tr><th>Criterio</th><th>Porcentaje</th><th>Calificación</th></tr>
+        <tr><td>Puntualidad del viaje</td><td>40 %</td><td>80</td></tr>
+        <tr><td>Estado del vehículo</td><td>30 %</td><td>70</td></tr>
+        <tr><td>Atención de la persona conductora</td><td>20 %</td><td>80</td></tr>
+        <tr><td>Comodidad</td><td>10 %</td><td>95</td></tr>
+      </table>`,
+      q52: `<table class="exam-table">
+        <tr><th>Distancia en kilómetros</th><th>Número de ciclistas</th></tr>
+        <tr><td>De 0 a menos de 20</td><td>12</td></tr>
+        <tr><td>De 20 a menos de 40</td><td>8</td></tr>
+        <tr><td>De 40 a menos de 60</td><td>8</td></tr>
+        <tr><td>De 60 a 80</td><td>6</td></tr>
+        <tr><th>Total</th><th>34</th></tr>
+      </table>`,
+      q56: `<table class="exam-table">
+        <tr><th>Experiencia previa</th><th>A</th><th>B</th><th>Total</th></tr>
+        <tr><td>Sí</td><td>14</td><td>18</td><td>32</td></tr>
+        <tr><td>No</td><td>16</td><td>17</td><td>33</td></tr>
+        <tr><th>Total</th><th>30</th><th>35</th><th>65</th></tr>
+      </table>`,
+      q59: `<table class="exam-table">
+        <tr><th>Urbanización</th><th>Media aritmética</th><th>Desviación estándar</th></tr>
+        <tr><td>K</td><td>320</td><td>64</td></tr>
+        <tr><td>L</td><td>280</td><td>84</td></tr>
+        <tr><td>M</td><td>300</td><td>75</td></tr>
+      </table>`,
+      q60: `<table class="exam-table">
+        <tr><th>Grupo</th><th>Media aritmética</th><th>Desviación estándar</th></tr>
+        <tr><td>F</td><td>55</td><td>7</td></tr>
+        <tr><td>G</td><td>60</td><td>10</td></tr>
+        <tr><td>H</td><td>50</td><td>6</td></tr>
+      </table>`
+    };
+
+    // Base de datos de preguntas con textos literales del examen
+    const questionsData = [
+      {
+        id: 1,
+        header: "1) En un jardín botánico se construyó una zona circular de protección alrededor de un árbol antiguo. La ubicación M del centro de la zona (donde está el árbol) es de 28 m al este y 18 m al norte de la ubicación R de la entrada principal del jardín, la cual se considera el origen de un sistema de coordenadas. Además, el radio de la circunferencia que representa el borde de la zona mide 10 m. ¿Cuál es la representación gráfica, cuyas unidades están en metros, correspondiente a la circunferencia que representa el borde de la zona?",
+        options: [svgs.q1_A, svgs.q1_B, svgs.q1_C, svgs.q1_D],
+        answer: "C",
+        exp: "El centro está en (28, 18). Con radio de 10 m, el punto extremo sobre la horizontal derecha es 28 + 10 = 38."
+      },
+      {
+        id: 2,
+        header: "2) El centro de la base de una piscina, con forma circular, se ubicó a 8 m al norte y 6 m al este de la entrada a un centro de recreo, la cual se considera el origen de un sistema de coordenadas. Además, el radio de la piscina mide 2 m.<br><br>La siguiente representación gráfica, cuyas unidades están en metros, muestra las ubicaciones J del centro de la base de la piscina, B de la entrada del centro de recreo y c de la circunferencia correspondiente al borde de la base de la piscina:",
+        graphic: svgs.q2,
+        footer: "De acuerdo con la información anterior, ¿cuál es la representación algebraica de c?",
+        options: ["(x - 6)² + (y - 8)² = 2", "(x + 6)² + (y + 8)² = 2", "(x + 6)² + (y + 8)² = 4", "(x - 6)² + (y - 8)² = 4"],
+        answer: "D",
+        exp: "Centro (6, 8) y radio r = 2. Ecuación: (x - 6)² + (y - 8)² = 2² = 4."
+      },
+      {
+        id: 3,
+        header: "3) ¿Cuál es la representación algebraica de la circunferencia cuyo centro corresponde a (-2, 6) y su radio mide 5?",
+        options: ["(x - 2)² + (y + 6)² = 25", "(x + 2)² + (y - 6)² = 25", "(x + 2)² + (y + 6)² = 5", "(x - 2)² + (y - 6)² = 5"],
+        answer: "B",
+        exp: "(x - (-2))² + (y - 6)² = 5² ⟹ (x + 2)² + (y - 6)² = 25."
+      },
+      {
+        id: 4,
+        header: "4) La siguiente representación gráfica muestra la circunferencia c de centro D y el origen O del sistema de coordenadas:",
+        graphic: svgs.q4,
+        footer: "De acuerdo con la información anterior, si OD = 5√2, entonces, ¿cuál es el par ordenado correspondiente a D?",
+        options: ["(-25, 25)", "(25, -25)", "(5, -5)", "(-5, 5)"],
+        answer: "D",
+        exp: "En el 2do cuadrante sobre y = -x, el par (-5, 5) cumple d = √((-5)² + 5²) = √50 = 5√2."
+      },
+      {
+        id: 5,
+        header: "5) En el patio de una casa se colocó una piscina portátil de base circular, cuyo radio mide 3 m. El centro de la base de la piscina se ubicó a 12 m al este y 8 m al norte de la puerta trasera de la casa, la cual se considera el origen de un sistema de coordenadas.<br><br>La siguiente representación gráfica, cuyas unidades están en metros, muestra las ubicaciones, G del centro de la base de la piscina, P de la puerta y c de la circunferencia correspondiente al borde de la base:",
+        graphic: svgs.q5,
+        footer: "Luego, se decidió mover la piscina de modo que su base se traslade, desde su ubicación actual, 9 m al oeste y 5 m al sur.<br><br>De acuerdo con la información anterior, ¿cuál es la representación algebraica, cuyas unidades están en metros, de la circunferencia correspondiente al borde de la base de la piscina en la nueva ubicación?",
+        options: ["(x - 3)² + (y - 3)² = 9", "(x + 3)² + (y + 3)² = 9", "(x - 21)² + (y - 13)² = 9", "(x - 3)² + (y - 3)² = 3"],
+        answer: "A",
+        exp: "Nuevo centro: (12 - 9, 8 - 5) = (3, 3) con radio r = 3 ⟹ (x - 3)² + (y - 3)² = 9."
+      },
+      {
+        id: 6,
+        header: "6) Considere la siguiente información:<br><br>En el piso de una sala de exhibición se colocó una alfombra circular, cuyo radio mide 2 m. El centro de la alfombra se ubicó en el punto correspondiente a (3, 4) de un sistema de coordenadas, cuyas unidades están dadas en metros.<br><br>Posteriormente, se decidió trasladar la alfombra, desde su ubicación actual, 4 m hacia la izquierda (en la dirección negativa del eje \"x\"), y 5 m hacia adelante (en la dirección positiva del eje \"y\").",
+        footer: "De acuerdo con la información anterior, ¿cuál es la representación algebraica de la circunferencia correspondiente al borde de la alfombra en la nueva ubicación?",
+        options: ["(x - 3)² + (y - 4)² = 4", "(x - 4)² + (y - 5)² = 4", "(x + 1)² + (y - 9)² = 4", "(x + 2)² + (y - 8)² = 4"],
+        answer: "C",
+        exp: "Nuevo centro: (3 - 4, 4 + 5) = (-1, 9). Ecuación: (x + 1)² + (y - 9)² = 4."
+      },
+      {
+        id: 7,
+        header: "7) Considere la siguiente información:<br><br>Una empresa de servicios de agua instaló un aspersor (dispositivo mecánico giratorio). El borde de la zona de cobertura corresponde a la circunferencia dada por (x - 30)² + (y + 20)² = 1600, la cual está representada en un sistema de coordenadas cartesianas, cuyas unidades están en metros.<br><br>Por razones operativas, la empresa traslada el aspersor, desde su ubicación actual, 40 m en la dirección negativa del eje \"x\" y 30 m en la dirección positiva del eje \"y\".",
+        footer: "De acuerdo con la información anterior, ¿cuál es la representación algebraica de la circunferencia correspondiente al borde de la zona de cobertura en la nueva ubicación?",
+        options: ["(x - 10)² + (y + 10)² = 1600", "(x - 70)² + (y + 50)² = 1600", "(x + 10)² + (y - 10)² = 1600", "(x + 70)² + (y - 50)² = 1600"],
+        answer: "C",
+        exp: "Centro original (30, -20). Nuevo centro: (30 - 40, -20 + 30) = (-10, 10) ⟹ (x + 10)² + (y - 10)² = 1600."
+      },
+      {
+        id: 8,
+        header: "8) Para realizar actividades deportivas se delimitó en la cancha de un polideportivo una zona circular cuya medida del radio es de 5 m.<br><br>La siguiente representación gráfica, cuyas unidades están en metros, muestra las ubicaciones W del centro de la zona y c de la circunferencia correspondiente a su borde:",
+        graphic: svgs.q8,
+        footer: "Asimismo, durante una actividad, cuatro personas se ubicaron en los siguientes puntos:<br>• Cristopher se ubicó en el punto correspondiente a (3, 5).<br>• Natalia se ubicó en el punto correspondiente a (-4, -4).<br>• Brenda se ubicó en el punto correspondiente a (6, 1).<br>• Alonso se ubicó en el punto correspondiente a (1, 2).<br><br>De acuerdo con la información anterior, ¿cuál persona se ubicó en el interior de la zona circular?",
+        options: ["Cristopher", "Natalia", "Brenda", "Alonso"],
+        answer: "D",
+        exp: "Alonso (1, 2): 1² + 2² = 5 < 25 (Interior). Los demás dan distancias al centro mayores a 25."
+      },
+      {
+        id: 9,
+        header: "9) Considere la siguiente información:<br><br>Una organización ambiental instaló una estación de monitoreo para detectar cambios en la calidad del aire alrededor de una zona protegida. El alcance máximo de monitoreo, alrededor de la estación, está representado por la circunferencia c. Además, la representación algebraica de c, cuyas unidades están dadas en kilómetros, es (x - 4)² + (y - 3)² = 25.<br><br>Asimismo, se definieron cuatro puntos de muestreo dados por P(6, 4), Q(10, 3), R(1, 1) y S(4, 7).",
+        footer: "De acuerdo con la información anterior, ¿cuál punto de muestreo se ubica en el exterior de c?",
+        options: ["P", "Q", "R", "S"],
+        answer: "B",
+        exp: "Q(10, 3): (10 - 4)² + (3 - 3)² = 36 + 0 = 36 > 25 (Exterior)."
+      },
+      {
+        id: 10,
+        header: "10) La siguiente representación gráfica muestra la circunferencia c de centro O, cuyo diámetro mide 14. Además, se muestra el punto B:",
+        graphic: svgs.q10,
+        footer: "De acuerdo con la información anterior, ¿cuál es la distancia desde O hasta B?",
+        options: ["18,4", "22,0", "25,0", "27,8"],
+        answer: "C",
+        exp: "Diámetro 14 ⟹ radio = 7. El centro está en (-7, -7). B está en (17, 0). d = √((17 - (-7))² + (0 - (-7))²) = √(24² + 7²) = √625 = 25,0."
+      },
+      {
+        id: 11,
+        header: "11) Un parque tiene forma circular y la medida de su diámetro es 32 m. Las rectas h, k, representan aceras que pasan por el centro del parque. Las rectas j, n, representan dos aceras paralelas entre sí. La siguiente representación gráfica, cuyas unidades están en metros, muestra la circunferencia que representa el parque y las rectas que representan las aceras:",
+        graphic: svgs.q11,
+        footer: "De acuerdo con la información anterior, dos rectas perpendiculares entre sí corresponden a",
+        options: ["j y k", "h y j", "k y n", "n y j"],
+        answer: "B",
+        exp: "La recta h es vertical y la recta j es horizontal tangencial, por lo que h ⊥ j."
+      },
+      {
+        id: 12,
+        header: "12) La siguiente representación gráfica, cuyas unidades están en metros, muestra el polígono ABCD que representa la superficie de un terreno:",
+        graphic: svgs.q12,
+        footer: "De acuerdo con la información anterior, si se requiere colocar un alambre sobre la totalidad del borde de la superficie del terreno, entonces, ¿cuál es la cantidad mínima de alambre, en metros, que se colocará?",
+        options: ["20", "24", "16 + √32", "16 + 2√32"],
+        answer: "D",
+        exp: "Segmentos: AB = √(8²+6²) = 10, BC = 6, CD = √(4²+4²) = √32, DA = √(4²+4²) = √32. Perímetro = 16 + 2√32."
+      },
+      {
+        id: 13,
+        header: "13) En el parque central de una comunidad se construyó con cemento una zona para colocar mesas. La siguiente figura muestra la forma que tiene la superficie de cemento de la zona, la cual está formada por un hexágono regular y seis cuadrados congruentes entre sí:",
+        graphic: svgs.q13,
+        footer: "De acuerdo con la información anterior, si se requiere colocar cerámica en la totalidad de la superficie de la zona, entonces, ¿cuántos metros cuadrados, como mínimo, se deben colocar?",
+        options: ["54 + 13,5√3", "54 + 2,25√3", "56,25√3", "67,5√3"],
+        answer: "A",
+        exp: "Área de 6 cuadrados = 6 × 3² = 54. Hexágono = (Perímetro × apotema)/2 = (18 × 1,5√3)/2 = 13,5√3 ⟹ 54 + 13,5√3."
+      },
+      {
+        id: 14,
+        header: "14) Considere la siguiente información:<br><br>El piso de un quiosco ubicado en el parque de una ciudad tiene forma de octágono regular, cuya medida de uno de sus lados es 3 m. Además, se sabe que la medida de una apotema del octágono que representa ese piso es aproximadamente 3,62 m.",
+        footer: "De acuerdo con la información anterior, si se requiere pintar la totalidad del piso de ese quiosco, entonces la cantidad aproximada de metros cuadrados que se requieren pintar corresponde a",
+        options: ["10,86", "24,00", "43,44", "86,88"],
+        answer: "C",
+        exp: "Perímetro = 8 × 3 = 24. Área = (24 × 3,62)/2 = 43,44 m²."
+      },
+      {
+        id: 15,
+        header: "15) En un centro comercial se colocó una cinta de señalización sobre el piso para delimitar una zona de construcción.<br><br>La siguiente representación gráfica, cuyas unidades están en metros, muestra la figura PRS que representa la forma de la zona:",
+        graphic: svgs.q15,
+        footer: "De acuerdo con la información anterior, la cantidad mínima de metros de cinta utilizada para delimitar esa zona es mayor que",
+        options: ["4 y menor que 13", "15 y menor que 19", "19 y menor que 24", "24 y menor que 31"],
+        answer: "B",
+        exp: "Base PS = 6, lados PR = √(3²+4²) = 5, RS = 5. Perímetro = 6 + 5 + 5 = 16 m (mayor que 15 y menor que 19)."
+      },
+      {
+        id: 16,
+        header: "16) Considere las siguientes proposiciones con respecto a la sección plana que se forma por la intersección de un plano con un cono circular recto:<br><br>I. Si el plano es paralelo a la base del cono, entonces la sección plana que se forma corresponde a una circunferencia.<br>II. Si el plano es oblicuo con respecto a la base del cono, sin cortarla, entonces la sección plana que se forma corresponde a una elipse.",
+        footer: "De ellas, ¿cuáles son verdaderas?",
+        options: ["Ambas", "Ninguna", "Solo la I", "Solo la II"],
+        answer: "A",
+        exp: "Ambas definiciones corresponden exactamente a las secciones cónicas descritas."
+      },
+      {
+        id: 17,
+        header: "17) Carlos está diseñando dos parlantes portátiles a partir de un cilindro circular recto de metal. La medida del radio de una base del cilindro es de 12 cm. Para obtener los parlantes, él le realizó al cilindro un corte plano y paralelo a sus bases. ¿Cuál es aproximadamente el área, en centímetros cuadrados, de la sección plana obtenida en uno de los parlantes, producto del corte realizado?",
+        options: ["37,68", "75,36", "113,04", "452,16"],
+        answer: "D",
+        exp: "El corte plano paralelo es un círculo congruente con la base: Área = π × 12² = 144π ≈ 452,16 cm²."
+      },
+      {
+        id: 18,
+        header: "18) Una máquina fabricó una cubierta de un recipiente, a partir de una esfera de cerámica. La medida del radio de la esfera es de 10 cm. Para elaborar la cubierta, la máquina le realizó un corte a la esfera para obtener una sección plana que representa la base de la cubierta. Además, al momento de realizar el corte, el centro de la sección plana quedó a 6 cm del centro de la esfera. La siguiente figura muestra la forma de la cubierta:",
+        graphic: svgs.q18,
+        footer: "De acuerdo con la información anterior, ¿cuál es la medida del radio de la base de la cubierta?",
+        options: ["4 cm", "8 cm", "10 cm", "16 cm"],
+        answer: "B",
+        exp: "Por el teorema de Pitágoras: r = √(10² - 6²) = √(100 - 36) = √64 = 8 cm."
+      },
+      {
+        id: 19,
+        header: "19) La siguiente representación gráfica muestra el polígono RSTU:",
+        graphic: svgs.q19,
+        footer: "De acuerdo con la información anterior, con respecto al eje de simetría del polígono, el homólogo de RS corresponde a",
+        options: ["ST", "UT", "RU", "RT"],
+        answer: "B",
+        exp: "El eje de simetría es la recta y = x. R(-4, 0) refleja en U(0, -4) y S(0, 3) en T(3, 0). Por lo tanto, el homólogo de RS es UT."
+      },
+      {
+        id: 20,
+        header: "20) La siguiente representación gráfica muestra los triángulos ABC y DEC:",
+        graphic: svgs.q20,
+        footer: "De acuerdo con la información anterior, considere las siguientes proposiciones:<br><br>I. A es homólogo con D, con respecto a la recta dada por x = 5.<br>II. BC es homólogo con EC, con respecto a la recta dada por y = -3.<br><br>De ellas, ¿cuáles son verdaderas?",
+        options: ["Ambas", "Ninguna", "Solo la I", "Solo la II"],
+        answer: "C",
+        exp: "El eje de simetría vertical pasa por el punto medio x = 5 (I verdadera). La simetría no es horizontal respecto a y = -3 (II falsa)."
+      },
+      {
+        id: 21,
+        header: "21) La siguiente representación gráfica muestra el triángulo DNW:",
+        graphic: svgs.q21_main,
+        footer: "De acuerdo con la información anterior, si al triángulo se le aplica una rotación, con centro en el origen del sistema de coordenadas y con un ángulo de 90° en el mismo sentido que el giro de las manecillas de un reloj, entonces, ¿cuál es la representación gráfica del triángulo obtenido producto de la rotación?",
+        options: [svgs.q21_A, svgs.q21_B, svgs.q21_C, svgs.q21_D],
+        answer: "D",
+        exp: "Rotación horaria de 90°: (x, y) ⟶ (y, -x). D(-2, 0) pasa a (0, 2) y W(0, -3) pasa a (-3, 0)."
+      },
+      {
+        id: 22,
+        header: "22) La siguiente representación gráfica muestra el triángulo DNW:",
+        graphic: svgs.q21_main,
+        footer: "De acuerdo con la información anterior, si al triángulo se le aplica una reflexión con respecto al eje \"y\", entonces, ¿cuál es el par ordenado correspondiente a la imagen del punto D?",
+        options: ["(0, 2)", "(2, 0)", "(-2, 0)", "(0, -2)"],
+        answer: "B",
+        exp: "La reflexión con respecto al eje y transforma (x, y) en (-x, y): -(-2, 0) = (2, 0)."
+      },
+      {
+        id: 23,
+        header: "23) Si en un sistema de coordenadas, al punto M(10, -7) se le aplica una traslación de la forma (x - 12, y + 10), entonces, ¿cuál es el par ordenado correspondiente a la imagen de M?",
+        options: ["(22, 3)", "(-2, 3)", "(-2, -17)", "(22, -17)"],
+        answer: "B",
+        exp: "(10 - 12, -7 + 10) = (-2, 3)."
+      },
+      {
+        id: 24,
+        header: "24) Considere las siguientes representaciones gráficas de dos relaciones en las cuales \"x\" corresponde a la variable independiente y \"y\" a la variable dependiente:",
+        graphic: svgs.q24,
+        footer: "De acuerdo con la información anterior, ¿cuáles representaciones gráficas podrían corresponder a una función?",
+        options: ["Ambas", "Ninguna", "Solo la I", "Solo la II"],
+        answer: "D",
+        exp: "La gráfica I no cumple con el criterio de la recta vertical (falla). La gráfica II sí lo cumple."
+      },
+      {
+        id: 25,
+        header: "25) Considere la siguiente información:<br><br>La función h, la cual determina la altitud \"h(x)\", en metros, de un avión en vuelo, está dada por h(x) = 1200 + 300x, donde \"x\" representa el tiempo en minutos desde que el avión inició un ascenso, con 0 ≤ x ≤ 6.",
+        footer: "De acuerdo con la información anterior, durante todo ese tiempo, la altitud del avión fue mayor o igual que",
+        options: ["1200 m y menor o igual que 3000 m", "1500 m y menor o igual que 3000 m", "1200 m y menor o igual que 1500 m", "1500 m y menor o igual que 9000 m"],
+        answer: "A",
+        exp: "h(0) = 1200 m; h(6) = 1200 + 300(6) = 3000 m."
+      },
+      {
+        id: 26,
+        header: "26) La siguiente representación gráfica corresponde a la función p, que determina la temperatura \"p(x)\" en grados Celsius del interior de un refrigerador, en función del tiempo \"x\" en horas desde el inicio de un experimento, con 0 ≤ x ≤ 10:",
+        graphic: svgs.q26,
+        footer: "De acuerdo con la información anterior, ¿cuál opción muestra un intervalo del tiempo, en horas, donde la temperatura en el interior del refrigerador fue negativa?",
+        options: ["]0, 2[", "]1, 3[", "]5, 7[", "]9, 10["],
+        answer: "C",
+        exp: "La temperatura es menor a cero en ]4, 8[. El subintervalo ]5, 7[ está totalmente contenido dentro de él."
+      },
+      {
+        id: 27,
+        header: "27) La siguiente representación gráfica corresponde a la función p, que determina la temperatura \"p(x)\" en grados Celsius del interior de un refrigerador, en función del tiempo \"x\" en horas desde el inicio de un experimento, con 0 ≤ x ≤ 10:",
+        graphic: svgs.q26,
+        footer: "De acuerdo con la información anterior, ¿en cuántas ocasiones la temperatura en el interior del refrigerador fue igual a 2 °C?",
+        options: ["Cuatro ocasiones", "Tres ocasiones", "Dos ocasiones", "Una ocasión"],
+        answer: "B",
+        exp: "La recta horizontal y = 2 interseca la curva en tres puntos distintos."
+      },
+      {
+        id: 28,
+        header: "28) Sean las funciones f y g dadas por:<br><br>f: [1, 3] ⟶ [0, 4], con f(x) = 2x - 2<br>g: [0, 4] ⟶ [1, 17], con g(x) = x² + 1",
+        footer: "De acuerdo con la información anterior, ¿cuál es el criterio de la función (g ∘ f)?",
+        options: ["(g ∘ f)(x) = 2x²", "(g ∘ f)(x) = 2x² - 1", "(g ∘ f)(x) = 4x² - 8x + 5", "(g ∘ f)(x) = 4x² + 8x + 5"],
+        answer: "C",
+        exp: "(g ∘ f)(x) = (2x - 2)² + 1 = 4x² - 8x + 4 + 1 = 4x² - 8x + 5."
+      },
+      {
+        id: 29,
+        header: "29) La siguiente representación gráfica corresponde a la función g:",
+        graphic: svgs.q29,
+        footer: "De acuerdo con la información anterior, ¿cuál opción podría corresponder a la representación gráfica de g⁻¹?",
+        options: [svgs.q29_A, svgs.q29_B, svgs.q29_C, svgs.q29_D],
+        answer: "D",
+        exp: "La función inversa refleja sobre y = x: el punto (0, 2) pasa a ser (2, 0) sobre el eje horizontal x."
+      },
+      {
+        id: 30,
+        header: "30) La siguiente representación gráfica corresponde a la función v, que determina la potencia eléctrica \"v(x)\" en vatios generada por un panel solar, en función del tiempo \"x\" en horas, desde el inicio de la medición, con 0 ≤ x ≤ 6:",
+        graphic: svgs.q30,
+        footer: "De acuerdo con la información anterior, si para determinar con precisión el tiempo en función de la potencia generada se requiere establecer un posible intervalo del dominio de v, en el cual esta función tenga inversa, entonces, ¿cuál opción corresponde a ese posible intervalo?",
+        options: ["[0, 3]", "[0, 4]", "[1, 5]", "[4, 6]"],
+        answer: "D",
+        exp: "En el intervalo [4, 6] la función es estrictamente monótona creciente (biyectiva)."
+      },
+      {
+        id: 31,
+        header: "31) Considere la siguiente información:<br><br>La función k, la cual determina el área \"k(t)\" en decímetros cuadrados de una zona iluminada por una lámpara durante una prueba técnica, está dada por k(t) = 6(t² + 5), donde \"t\" representa el tiempo en minutos desde el inicio de la prueba, con 0 ≤ t ≤ 6.<br><br>Asimismo, para analizar el comportamiento de la iluminación es necesario determinar el tiempo transcurrido a partir del área cubierta, por lo que se requiere determinar el criterio de la función t, correspondiente a la función inversa de k.",
+        footer: "De acuerdo con la información anterior, ¿cuál opción muestra el criterio de t?",
+        options: ["t(k) = √((k + 30)/6)", "t(k) = √((k - 30)/6)", "t(k) = (√k + 30)/6", "t(k) = (√k - 30)/6"],
+        answer: "B",
+        exp: "k = 6t² + 30 ⟹ t² = (k - 30)/6 ⟹ t = √((k - 30)/6)."
+      },
+      {
+        id: 32,
+        header: "32) Considere la siguiente información:<br><br>En un laboratorio se utiliza la función r para convertir la concentración \"c\" de una sustancia a un valor interno llamado índice de reactividad \"r(c)\", el cual indica cuán rápida y fácilmente una sustancia reacciona con otra. Esta función está dada por r(c) = (c - 2)/3, con 2 ≤ c ≤ 8.<br><br>Además, debido a un error se perdieron algunos datos de concentración, sin embargo, se conservaron los valores del índice de reactividad. Para reconstruir las concentraciones originales, se necesita utilizar la función c, la cual corresponde a la función inversa de r.",
+        footer: "De acuerdo con la información anterior, ¿cuál es el criterio de c?",
+        options: ["c(r) = 3r + 2", "c(r) = 3r - 2", "c(r) = 2r + 3", "c(r) = 2r - 3"],
+        answer: "A",
+        exp: "r = (c - 2)/3 ⟹ 3r = c - 2 ⟹ c(r) = 3r + 2."
+      },
+      {
+        id: 33,
+        header: "33) Considere la siguiente información:<br><br>La función n, la cual determina el nivel de agua \"n(t)\", en centímetros, de un depósito durante un proceso de llenado, está dada por n(t) = 5 + 4√(t + 4), donde \"t\" representa el tiempo, en minutos, desde que inició el proceso, con 0 ≤ t ≤ 60.",
+        footer: "De acuerdo con la información anterior, ¿cuál fue el nivel del agua del depósito, en centímetros, a los 32 min de iniciado el proceso?",
+        options: ["29", "42", "54", "82"],
+        answer: "A",
+        exp: "n(32) = 5 + 4√(32 + 4) = 5 + 4(6) = 29 cm."
+      },
+      {
+        id: 34,
+        header: "34) Considere la siguiente información:<br><br>La función b, la cual determina la longitud \"b(x)\", en centímetros, de una planta durante su crecimiento, está dada por b(x) = 6 + 5√(x + 4), donde \"x\" representa el tiempo, en días, desde que se inició el seguimiento de crecimiento, con 0 ≤ x ≤ 96.",
+        footer: "De acuerdo con la información anterior, ¿a los cuántos días de iniciado el seguimiento la planta alcanzó una longitud igual a 41 cm?",
+        options: ["40", "45", "74", "84"],
+        answer: "B",
+        exp: "6 + 5√(x + 4) = 41 ⟹ 5√(x + 4) = 35 ⟹ √(x + 4) = 7 ⟹ x + 4 = 49 ⟹ x = 45."
+      },
+      {
+        id: 35,
+        header: "35) La siguiente representación gráfica corresponde a la función f:",
+        graphic: svgs.q35,
+        footer: "De acuerdo con la información anterior, si f involucra a la función raíz cuadrada, entonces, ¿cuál opción corresponde al criterio de f?",
+        options: ["f(x) = √(x - 2) - 3", "f(x) = √(x - 2) + 3", "f(x) = √(x + 3) - 2", "f(x) = √(x + 3) + 2"],
+        answer: "C",
+        exp: "Vértice de inicio en (h, k) = (-3, -2) ⟹ f(x) = √(x - (-3)) - 2 = √(x + 3) - 2."
+      },
+      {
+        id: 36,
+        header: "36) Considere la siguiente información:<br><br>La función c, la cual determina el costo total \"c(t)\", en miles de colones, por el alquiler de una bicicleta, está dada por c(t) = 2 + 0,5t, donde \"t\" representa el tiempo en horas de alquiler de la bicicleta, con 0 ≤ t ≤ 8.",
+        footer: "De acuerdo con la información anterior, ¿cuál de las siguientes representaciones gráficas corresponde a c?",
+        options: [svgs.q36_A, svgs.q36_B, svgs.q36_C, svgs.q36_D],
+        answer: "C",
+        exp: "c(0) = 2 y c(8) = 2 + 0,5(8) = 6. Representa el segmento que une (0, 2) con (8, 6)."
+      },
+      {
+        id: 37,
+        header: "37) El monto total mensual, en colones, que se paga por el servicio de transporte escolar para una persona estudiante, está relacionado linealmente con la cantidad de días que utiliza el servicio durante un mes.<br><br>La siguiente tabla muestra la cantidad de días que utilizó el servicio de transporte escolar la persona estudiante y el monto total, en colones, pagado por el servicio en dos meses del año:",
+        graphic: tables.q37,
+        footer: "De acuerdo con la información anterior, ¿cuál es la ecuación de la recta que representa el monto total mensual \"y\", en colones, pagado por el servicio de transporte escolar, en función de la cantidad \"x\" de días que la persona estudiante utiliza el servicio?",
+        options: ["y = 3000x + 5000", "y = 5000x + 3000", "y = 3000x + 95 000", "y = 95 000x + 3000"],
+        answer: "A",
+        exp: "m = (65000 - 50000)/(20 - 15) = 3000; b = 50000 - 3000(15) = 5000 ⟹ y = 3000x + 5000."
+      },
+      {
+        id: 38,
+        header: "38) Considere la siguiente información:<br><br>La función v, la cual determina el número de visitantes \"v(t)\" que había en un museo durante una exhibición, está dada por v(t) = -6t² + 48t + 150, donde \"t\" representa el tiempo en horas desde que se abrieron las puertas del museo, con 1 ≤ t ≤ 7.",
+        footer: "De acuerdo con la información anterior, durante todo ese tiempo, ¿a las cuántas horas, desde que se abrieron las puertas, había en el museo el mayor número de visitantes?",
+        options: ["3", "4", "5", "8"],
+        answer: "B",
+        exp: "Vértice: t = -b/(2a) = -48 / (2 × -6) = 4 horas."
+      },
+      {
+        id: 39,
+        header: "39) La siguiente representación gráfica corresponde a la función cuadrática h, la cual determina la altura \"h(x)\", en metros, que alcanzó una pelota lanzada hacia arriba, en función del tiempo \"x\" en segundos desde el momento en que fue lanzada, con 0 ≤ x ≤ 6:",
+        graphic: svgs.q39,
+        footer: "De acuerdo con la información anterior, ¿cuál opción corresponde a una posible altura que alcanzó la pelota?",
+        options: ["2 m", "5 m", "53 m", "86 m"],
+        answer: "C",
+        exp: "El recorrido de la altura va desde 25 m hasta 75 m. La única opción dentro de este intervalo es 53 m."
+      },
+      {
+        id: 40,
+        header: "40) Considere la siguiente información:<br><br>En una reserva forestal se estableció que la función a, la cual determina el área aproximada \"a(x)\", en hectáreas, ocupada por una especie vegetal invasora, está dada por a(x) = (1,5)ˣ, donde \"x\" representa el tiempo en años desde que se detectó la especie en la reserva, con 0 ≤ x ≤ 5.",
+        footer: "De acuerdo con la información anterior, durante todo ese tiempo el área aproximada, en hectáreas, ocupada por la especie vegetal fue mayor o igual que",
+        options: ["1,5 y menor que 5", "0 y menor que 5", "1 y menor que 8", "5 y menor que 8"],
+        answer: "C",
+        exp: "a(0) = 1 ha; a(5) = 1,5⁵ ≈ 7,59 ha. El área fue mayor o igual que 1 y menor que 8."
+      },
+      {
+        id: 41,
+        header: "41) La siguiente representación gráfica corresponde a la función g dada por g(x) = log_a(x):",
+        graphic: svgs.q41,
+        footer: "De acuerdo con la información anterior, ¿cuál opción muestra un posible valor de \"a\"?",
+        options: ["1", "3", "0,5", "1,7"],
+        answer: "C",
+        exp: "Una función logarítmica es decreciente cuando su base cumple 0 < a < 1 (a = 0,5)."
+      },
+      {
+        id: 42,
+        header: "42) Katherine compró tres bolsas de café y dos frascos de miel, por los cuales pagó ₡14 850. Tomás compró seis bolsas de café y un frasco de miel, por los cuales pagó ₡18 000. Si cada bolsa de café tenía el mismo precio y cada frasco de miel tenía el mismo precio, entonces, ¿cuál fue el precio de cada frasco de miel?",
+        options: ["₡1300", "₡1650", "₡3900", "₡7050"],
+        answer: "C",
+        exp: "Sistema: 3c + 2m = 14850; 6c + m = 18000. Multiplicando la primera por 2: 6c + 4m = 29700. Restando: 3m = 11700 ⟹ m = ₡3900."
+      },
+      {
+        id: 43,
+        header: "43) Considere la siguiente información:<br><br>En una fábrica se producen únicamente bolsos de dos modelos: M y N. Para la producción se toma en cuenta lo siguiente:<br>• Cada bolso del modelo M requiere siete piezas de cuero y cuatro hebillas.<br>• Cada bolso del modelo N requiere tres piezas de cuero y cinco hebillas.",
+        footer: "De acuerdo con la información anterior, si para la producción de bolsos de ambos modelos se requirieron 305 piezas de cuero y 240 hebillas, entonces, ¿cuántos bolsos del modelo M se produjeron en total?",
+        options: ["25", "30", "35", "40"],
+        answer: "C",
+        exp: "7M + 3N = 305 y 4M + 5N = 240. Resolviendo el sistema se obtiene M = 35."
+      },
+      {
+        id: 44,
+        header: "44) La siguiente representación gráfica muestra las rectas r, v, w:",
+        graphic: svgs.q44,
+        footer: "De acuerdo con la información anterior, considere las siguientes proposiciones:<br><br>I. El sistema de ecuaciones correspondiente a las rectas \"v\" y \"w\" tiene solución única.<br>II. El sistema de ecuaciones correspondiente a las rectas \"r\" y \"w\" tiene solución vacía.<br><br>De ellas, ¿cuáles son verdaderas?",
+        options: ["Ambas", "Ninguna", "Solo la I", "Solo la II"],
+        answer: "C",
+        exp: "Las rectas v y w son secantes (tienen solución única, I verdadera). r y w no son paralelas. Solo la I."
+      },
+      {
+        id: 45,
+        header: "45) Considere la siguiente información:<br><br>La función d, la cual determina la cantidad aproximada de descargas \"d(x)\", en miles, de una aplicación móvil, está modelada por d(x) = 2 · (1,1)²ˣ, donde \"x\" representa el tiempo en días desde el lanzamiento de una campaña publicitaria digital, con 0 < x ≤ 5.",
+        footer: "De acuerdo con la información anterior, ¿cuál fue la cantidad aproximada de descargas, en miles, de la aplicación a los 2 días desde el lanzamiento de la campaña?",
+        options: ["1,0", "2,4", "2,9", "8,8"],
+        answer: "C",
+        exp: "d(2) = 2 · (1,1)⁴ = 2 · 1,4641 ≈ 2,9 miles."
+      },
+      {
+        id: 46,
+        header: "46) Considere la siguiente representación tabular de la función g:",
+        graphic: tables.q46,
+        footer: "De acuerdo con la información anterior, ¿cuál opción corresponde al criterio de la función que se adapta mejor para modelar a g?",
+        options: ["g(x) = 2ˣ", "g(x) = x²", "g(x) = 2x", "g(x) = log₂(x)"],
+        answer: "A",
+        exp: "Para cada x entero consecutivo el valor se duplica (2⁰=1, 2¹=2, 2²=4...) ⟹ g(x) = 2ˣ."
+      },
+      {
+        id: 47,
+        header: "47) La siguiente tabla muestra la función c, la cual determina la cantidad de agua \"c(t)\", en miles de litros, acumulada en un depósito de almacenamiento, en función del tiempo \"t\" en horas desde el inicio del llenado, con 0 ≤ t ≤ 15:",
+        graphic: tables.q47,
+        footer: "De acuerdo con la información anterior, ¿cuál opción corresponde al tipo de función que se adapta mejor para modelar a c?",
+        options: ["Función exponencial", "Función logarítmica", "Función cuadrática", "Función lineal"],
+        answer: "D",
+        exp: "La tasa de cambio es constante (Δc / Δt = 4,5 / 3 = 1,5), modelo lineal."
+      },
+      {
+        id: 48,
+        header: "48) La siguiente representación gráfica corresponde a la función z:",
+        graphic: svgs.q48,
+        footer: "De acuerdo con la información anterior, ¿cuál opción corresponde al tipo de función involucrada en el modelo matemático que se adapta mejor para representar a z?",
+        options: ["Función cuadrática", "Función logarítmica", "Función exponencial"],
+        answer: "B",
+        exp: "Curva decreciente con asíntota vertical en el eje y y progresión geométrica en x, corresponde a una función logarítmica."
+      },
+      {
+        id: 49,
+        header: "49) La siguiente tabla muestra algunas medidas estadísticas referentes a la cantidad de combustible, en litros, consumida por cada uno de 180 vehículos de una empresa de transporte, al finalizar un mismo recorrido:",
+        graphic: tables.q49,
+        footer: "De acuerdo con la información anterior, la cantidad de combustible, en litros, consumida por al menos 135 vehículos de la empresa de transporte, al finalizar el recorrido, fue mayor o igual que",
+        options: ["44", "50", "52", "60"],
+        answer: "A",
+        exp: "135 de 180 vehículos representa el 75%. El 75% de los datos es mayor o igual que el primer cuartil Q1 = 44."
+      },
+      {
+        id: 50,
+        header: "50) La siguiente tabla muestra algunas medidas estadísticas referentes a la cantidad de combustible, en litros, consumida por cada uno de 180 vehículos de una empresa de transporte, al finalizar un mismo recorrido:",
+        graphic: tables.q49,
+        footer: "De acuerdo con la información anterior, con certeza, ¿cuál opción corresponde a una cantidad de combustible, en litros, que ninguno de los 180 vehículos pudo haber consumido al finalizar el recorrido?",
+        options: ["42", "57", "74", "85"],
+        answer: "D",
+        exp: "El consumo máximo registrado fue de 80 litros. Por certeza, ningún vehículo consumió 85 litros."
+      },
+      {
+        id: 51,
+        header: "51) La siguiente tabla muestra el porcentaje asignado a cada uno de los criterios que se consideraron para evaluar la satisfacción de las personas usuarias de un servicio de transporte. Asimismo, se muestra la calificación obtenida por el servicio en cada criterio, en una escala de 1 a 100:",
+        graphic: tables.q51,
+        footer: "Además, la nota final del servicio corresponde a la media aritmética ponderada de los cuatro criterios evaluados.<br><br>De acuerdo con la información anterior, ¿cuál es la nota final obtenida por el servicio?",
+        options: ["78,50", "80,00", "81,25", "82,00"],
+        answer: "A",
+        exp: "Media ponderada: 0,40(80) + 0,30(70) + 0,20(80) + 0,10(95) = 32 + 21 + 16 + 9,5 = 78,50."
+      },
+      {
+        id: 52,
+        header: "52) La siguiente tabla muestra la distribución de frecuencias correspondientes a la distancia, en kilómetros, recorrida por cada ciclista de un equipo durante un fin de semana:",
+        graphic: tables.q52,
+        footer: "De acuerdo con la información anterior, ¿cuál es aproximadamente el promedio de las distancias, en kilómetros, recorridas por los ciclistas del equipo durante el fin de semana?",
+        options: ["8,0", "8,5", "34,7", "44,7"],
+        answer: "C",
+        exp: "Marcas de clase: 10, 30, 50, 70. Promedio = [10(12) + 30(8) + 50(8) + 70(6)] / 34 = 1180 / 34 ≈ 34,7 km."
+      },
+      {
+        id: 53,
+        header: "53) Una tómbola (recipiente esférico giratorio) contiene 20 bolitas de plástico, cada una tiene escrito en su superficie un número diferente del 1 al 20. Las bolitas se diferencian entre sí únicamente por el número.<br><br>Además, se realiza el experimento de \"extraer, al azar, una única bolita de la tómbola y se determina el número que tiene escrito\".<br><br>Se definen los siguientes eventos:<br>Q: la bolita extraída tiene escrito un número mayor o igual que 10.<br>R: la bolita extraída tiene escrito un número par.<br>S: la bolita extraída tiene escrito un número menor o igual que 12.<br>T: la bolita extraída tiene escrito un número impar.",
+        footer: "De acuerdo con la información anterior, con respecto al espacio muestral definido, el evento \"la bolita extraída tiene escrito un número menor que 10 o mayor que 12\" se representa simbólicamente como",
+        options: ["Q ∪ S", "Qᶜ ∪ S", "Q ∪ Sᶜ", "Qᶜ ∪ Sᶜ"],
+        answer: "B",
+        exp: "Menor que 10 corresponde al complemento de Q (Qᶜ). Al unirse con el evento S se representa como Qᶜ ∪ S."
+      },
+      {
+        id: 54,
+        header: "54) Una tómbola (recipiente esférico giratorio) contiene 20 bolitas de plástico, cada una tiene escrito en su superficie un número diferente del 1 al 20. Las bolitas se diferencian entre sí únicamente por el número.<br><br>Además, se realiza el experimento de \"extraer, al azar, una única bolita de la tómbola y se determina el número que tiene escrito\".<br><br>Se definen los siguientes eventos:<br>Q: la bolita extraída tiene escrito un número mayor o igual que 10.<br>R: la bolita extraída tiene escrito un número par.<br>S: la bolita extraída tiene escrito un número menor o igual que 12.<br>T: la bolita extraída tiene escrito un número impar.",
+        footer: "De acuerdo con la información anterior, dos eventos mutuamente excluyentes entre sí corresponden a",
+        options: ["R y S", "R y T", "Q y S", "Q y T"],
+        answer: "B",
+        exp: "Los eventos R (par) y T (impar) son disyuntos: R ∩ T = ∅."
+      },
+      {
+        id: 55,
+        header: "55) Considere la siguiente información:<br><br>En un grupo de veinticinco personas colaboradoras de una empresa, once tienen únicamente motocicleta, ocho tienen únicamente bicicleta, tres tienen ambos tipos de vehículo y el resto no tiene ninguno de los dos tipos de vehículo.",
+        footer: "De acuerdo con la información anterior, si se selecciona al azar una persona colaboradora de ese grupo, entonces, ¿cuál es la probabilidad, en notación decimal, de que esta tenga motocicleta?",
+        options: ["0,12", "0,44", "0,52", "0,56"],
+        answer: "D",
+        exp: "Tienen motocicleta: 11 (solo moto) + 3 (ambos) = 14. P = 14 / 25 = 0,56."
+      },
+      {
+        id: 56,
+        header: "56) Una organización ambiental abrió una convocatoria para incorporar personas voluntarias en un proyecto de reforestación. Las personas participantes provenían de dos comunidades: A y B. Además, se admitieron personas con experiencia previa o sin ella.<br><br>La siguiente tabla muestra la situación anterior:",
+        graphic: tables.q56,
+        footer: "De acuerdo con la información anterior, si se selecciona al azar una de las personas voluntarias que participaron en la convocatoria, entonces la probabilidad, en notación decimal, de que sea una persona con experiencia previa y proveniente de la comunidad A, es aproximadamente igual a",
+        options: ["0,22", "0,44", "0,49", "0,58"],
+        answer: "A",
+        exp: "P(Sí y de A) = 14 / 65 ≈ 0,215 ≈ 0,22."
+      },
+      {
+        id: 57,
+        header: "57) El siguiente diagrama de cajas muestra algunas medidas estadísticas relacionadas con el consumo mensual de energía eléctrica, en kilovatios hora, registrado en dos casas, durante un mismo periodo:",
+        graphic: svgs.q57,
+        footer: "De acuerdo con la información anterior, considere las siguientes proposiciones:<br><br>I. Se registró al menos un consumo mensual de energía eléctrica en la casa N menor que cualquier consumo mensual de energía eléctrica registrado en la casa M.<br>II. El recorrido intercuartílico de los datos en cada casa es menor que 50 kilovatios hora.<br><br>De ellas, ¿cuáles son verdaderas?",
+        options: ["Ambas", "Ninguna", "Solo la I", "Solo la II"],
+        answer: "C",
+        exp: "I es verdadera (el mínimo de N es 110 < 130). II es falsa (RIC de N = 70, RIC de M = 50). Solo la I."
+      },
+      {
+        id: 58,
+        header: "58) El siguiente diagrama de cajas muestra algunas medidas estadísticas relacionadas con el consumo mensual de energía eléctrica, en kilovatios hora, registrado en dos casas, durante un mismo periodo:",
+        graphic: svgs.q57,
+        footer: "De acuerdo con la información anterior, en cada casa, al menos en el 75 % del total de meses de ese periodo se registró un consumo mensual de energía eléctrica, en kilovatios hora, mayor o igual que",
+        options: ["130", "170", "200", "220"],
+        answer: "A",
+        exp: "En la casa N, el 75% es ≥ 130 (Q1 = 130). En la casa M, el 100% es ≥ 130 (Min = 130). Por ende, en cada casa al menos el 75% es mayor o igual a 130."
+      },
+      {
+        id: 59,
+        header: "59) La siguiente tabla muestra información relacionada con el consumo mensual de agua, en metros cúbicos, registrado en tres urbanizaciones durante un mismo mes:",
+        graphic: tables.q59,
+        footer: "Además:<br>• El coeficiente de variación del consumo de agua en la urbanización K es igual a 20 %.<br>• Coeficiente de variación = (Desviación estándar / Media aritmética) · 100<br><br>De acuerdo con la información anterior, la variabilidad relativa en el consumo de agua en la urbanización K es",
+        options: ["igual que la variabilidad relativa en la urbanización L.", "igual que la variabilidad relativa en la urbanización M.", "mayor que la variabilidad relativa en la urbanización L.", "menor que la variabilidad relativa en la urbanización M."],
+        answer: "D",
+        exp: "CV_K = 20%, CV_L = 30%, CV_M = 25%. La de K es menor que la de M."
+      },
+      {
+        id: 60,
+        header: "60) La siguiente tabla muestra información relacionada con los tiempos, en minutos, que tardaron las personas participantes de tres grupos en completar una misma ruta de ciclismo de 20 km:",
+        graphic: tables.q60,
+        footer: "Además:<br>• Luciana pertenece al grupo G y la posición relativa de su tiempo con respecto a su grupo fue igual a 0,5.<br>• Mario pertenece al grupo F y tardó 62 min.<br>• Valeria pertenece al grupo H y tardó 38 min.<br>• Posición relativa = (Dato - Media aritmética) / Desviación estándar<br><br>De acuerdo con la información anterior, si se determina la posición relativa del tiempo obtenido por cada persona con respecto a los tiempos de su grupo, entonces la posición relativa del tiempo obtenido por Luciana es",
+        options: ["igual que la obtenida por Mario.", "igual que la obtenida por Valeria.", "mayor que la obtenida por Mario.", "mayor que la obtenida por Valeria."],
+        answer: "D",
+        exp: "Z_Luciana = 0,5. Z_Valeria = (38 - 50)/6 = -2,0. Luciana (0,5) es mayor que Valeria (-2,0)."
+      }
+    ];
+
+    // Renderizado en el contenedor
+    const container = document.getElementById("examContainer");
+    const letters = ["A", "B", "C", "D"];
+
+    questionsData.forEach((q) => {
+      const card = document.createElement("div");
+      card.className = "question-card";
+      card.id = `card-${q.id}`;
+
+      let graphicHTML = q.graphic ? `<div class="diagram-container">${q.graphic}</div>` : "";
+      let footerHTML = q.footer ? `<div class="q-footer-text">${q.footer}</div>` : "";
+
+      let optionsHTML = "";
+      q.options.forEach((opt, idx) => {
+        const letter = letters[idx];
+        optionsHTML += `
+          <label class="option-label" id="label-${q.id}-${letter}">
+            <input type="radio" name="q${q.id}" value="${letter}" onchange="syncSheet(${q.id}, '${letter}')">
+            <span><strong>${letter})</strong> ${opt}</span>
+          </label>
+        `;
+      });
+
+      card.innerHTML = `
+        <div class="q-header-text">${q.header}</div>
+        ${graphicHTML}
+        ${footerHTML}
+        <div class="options">${optionsHTML}</div>
+        <div class="feedback" id="feedback-${q.id}"></div>
+      `;
+      container.appendChild(card);
+    });
+
+    // Llenado de Hoja de Respuestas
+    const sheetGrid = document.getElementById("sheetGrid");
+    questionsData.forEach((q) => {
+      const row = document.createElement("div");
+      row.className = "sheet-row";
+      let bubbles = "";
+      letters.forEach(letter => {
+        bubbles += `<div class="bubble" id="bubble-${q.id}-${letter}" onclick="selectFromSheet(${q.id}, '${letter}')">${letter}</div>`;
+      });
+      row.innerHTML = `<span style="font-weight:700; width:24px;">${q.id}.</span>${bubbles}`;
+      sheetGrid.appendChild(row);
+    });
+
+    function syncSheet(qId, letter) {
+      letters.forEach(l => {
+        const b = document.getElementById(`bubble-${qId}-${l}`);
+        if (b) b.classList.remove("selected");
+      });
+      const selectedBubble = document.getElementById(`bubble-${qId}-${letter}`);
+      if (selectedBubble) selectedBubble.classList.add("selected");
+    }
+
+    function selectFromSheet(qId, letter) {
+      const radio = document.querySelector(`input[name="q${qId}"][value="${letter}"]`);
+      if (radio) {
+        radio.checked = true;
+        syncSheet(qId, letter);
+      }
+    }
+
+    function openSheetModal() { document.getElementById("sheetModal").style.display = "flex"; }
+    function closeSheetModal() { document.getElementById("sheetModal").style.display = "none"; }
+
+    // Sincronización de datos del estudiante para pantalla e impresión
+    function syncStudentData() {
+      const name = document.getElementById("studentNameInput").value.trim();
+      const sec = document.getElementById("studentSectionInput").value.trim();
+      const dateVal = document.getElementById("studentDateInput").value;
+
+      document.getElementById("printStudentName").innerText = name || "____________________________________________________________________";
+      document.getElementById("printStudentSection").innerText = sec || "____________";
+
+      if (dateVal) {
+        const parts = dateVal.split("-");
+        if (parts.length === 3) {
+          document.getElementById("printStudentDate").innerText = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+          document.getElementById("printStudentDate").innerText = dateVal;
+        }
+      } else {
+        document.getElementById("printStudentDate").innerText = "___ / ___ / 2026";
+      }
+    }
+
+    // Calificación interactiva
+    function gradeExam() {
+      let score = 0;
+
+      questionsData.forEach((q) => {
+        const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+        const feedback = document.getElementById(`feedback-${q.id}`);
+        feedback.style.display = "block";
+
+        letters.forEach(l => {
+          const lbl = document.getElementById(`label-${q.id}-${l}`);
+          const b = document.getElementById(`bubble-${q.id}-${l}`);
+          if (lbl) { lbl.style.background = ""; lbl.style.borderColor = ""; }
+          if (b) { b.classList.remove("correct", "wrong"); }
+        });
+
+        const correctLabel = document.getElementById(`label-${q.id}-${q.answer}`);
+        const correctBubble = document.getElementById(`bubble-${q.id}-${q.answer}`);
+
+        if (selected && selected.value === q.answer) {
+          score++;
+          correctLabel.style.background = "var(--correct-bg)";
+          correctLabel.style.borderColor = "var(--correct)";
+          if (correctBubble) correctBubble.classList.add("correct");
+
+          feedback.className = "feedback correct-feedback";
+          feedback.innerHTML = `<strong>✔ ¡Correcto!</strong> Clave: <strong>${q.answer}</strong>. ${q.exp}`;
+        } else {
+          if (selected) {
+            const wrongLabel = document.getElementById(`label-${q.id}-${selected.value}`);
+            const wrongBubble = document.getElementById(`bubble-${q.id}-${selected.value}`);
+            if (wrongLabel) {
+              wrongLabel.style.background = "var(--wrong-bg)";
+              wrongLabel.style.borderColor = "var(--wrong)";
+            }
+            if (wrongBubble) wrongBubble.classList.add("wrong");
+          }
+          if (correctLabel) {
+            correctLabel.style.borderColor = "var(--correct)";
+          }
+          if (correctBubble) correctBubble.classList.add("correct");
+
+          feedback.className = "feedback wrong-feedback";
+          feedback.innerHTML = `<strong>✕ Incorrecto.</strong> Clave correcta: <strong>${q.answer}</strong>.<br>${q.exp}`;
+        }
+      });
+
+      // Actualizar tarjeta flotante superior
+      const scoreBox = document.getElementById("scoreBox");
+      const scoreText = document.getElementById("scoreText");
+      scoreBox.style.display = "block";
+      const percentage = ((score / questionsData.length) * 100).toFixed(1);
+      scoreText.innerText = `${score} / ${questionsData.length} (${percentage}%)`;
+
+      // Actualizar Portada Oficial del Examen
+      const percentageNum = parseFloat(percentage);
+      const grade = Math.round(percentageNum);
+      const coverScorePts = document.getElementById("coverScorePts");
+      const coverScorePct = document.getElementById("coverScorePct");
+      const coverGrade = document.getElementById("coverGrade");
+      const statusBadge = document.getElementById("coverStatusBadge");
+
+      if (coverScorePts) coverScorePts.innerText = score;
+      if (coverScorePct) coverScorePct.innerText = percentage;
+      if (coverGrade) coverGrade.innerText = grade;
+
+      if (statusBadge) {
+        if (percentageNum >= 70) {
+          statusBadge.className = "status-badge status-approved";
+          statusBadge.innerText = "✔ APROBADO";
+        } else {
+          statusBadge.className = "status-badge status-failed";
+          statusBadge.innerText = "✕ APLAZADO";
+        }
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
