@@ -694,7 +694,7 @@
       <div class="btn-group">
         <button class="btn-primary" onclick="gradeExam()">✔ Comprobar</button>
         <button class="btn-sheet" onclick="openSheetModal()">📋 Hoja Respuestas</button>
-        <button class="btn-pdf" onclick="window.print()">📥 Imprimir / Guardar en PDF</button>
+        <button class="btn-pdf" onclick="openPrintAuthModal()">📥 Imprimir / Guardar en PDF</button>
       </div>
     </div>
   </header>
@@ -826,6 +826,44 @@
         Sincronizada con el cuestionario en tiempo real.
       </p>
       <div id="sheetGrid" class="sheet-grid"></div>
+    </div>
+  </div>
+
+  <!-- Modal Clave de Autorización para Imprimir / PDF -->
+  <div id="printAuthModal" class="modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 12px; padding: 1.8rem 1.5rem;">
+      <div style="width: 52px; height: 52px; background: #eff6ff; color: #1e3a8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem auto; font-size: 1.6rem; border: 1.5px solid #bfdbfe;">
+        🔒
+      </div>
+      <h3 style="color: #1e3a8a; margin-bottom: 0.3rem; font-size: 1.25rem;">Autorización Requerida</h3>
+      <p style="font-size: 0.86rem; color: #64748b; margin-bottom: 1.2rem; line-height: 1.4;">
+        Ingrese la clave de seguridad para imprimir o guardar este examen en PDF.
+      </p>
+
+      <form onsubmit="verifyPrintPassword(event)">
+        <div style="margin-bottom: 1.2rem;">
+          <input 
+            type="password" 
+            id="printPasswordInput" 
+            placeholder="••••" 
+            maxlength="10"
+            autocomplete="off"
+            style="width: 100%; max-width: 200px; padding: 0.65rem 1rem; font-size: 1.4rem; letter-spacing: 0.4rem; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);"
+          >
+          <div id="printPasswordError" style="color: #dc2626; font-size: 0.84rem; font-weight: 600; margin-top: 0.5rem; display: none;">
+            ✕ Clave incorrecta.
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem; justify-content: center;">
+          <button type="button" onclick="closePrintAuthModal()" style="background: #e2e8f0; color: #334155; padding: 0.55rem 1.2rem; font-size: 0.9rem;">
+            Cancelar
+          </button>
+          <button type="submit" style="background: #1e3a8a; color: white; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+            Continuar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1867,6 +1905,74 @@
 
     function openSheetModal() { document.getElementById("sheetModal").style.display = "flex"; }
     function closeSheetModal() { document.getElementById("sheetModal").style.display = "none"; }
+
+    // Control de Clave de Seguridad para Imprimir / PDF
+    function openPrintAuthModal() {
+      const modal = document.getElementById("printAuthModal");
+      const input = document.getElementById("printPasswordInput");
+      const err = document.getElementById("printPasswordError");
+      if (err) err.style.display = "none";
+      if (input) {
+        input.value = "";
+        input.style.borderColor = "#cbd5e1";
+      }
+      modal.style.display = "flex";
+      setTimeout(() => { if (input) input.focus(); }, 100);
+    }
+
+    function closePrintAuthModal() {
+      const modal = document.getElementById("printAuthModal");
+      if (modal) modal.style.display = "none";
+      const input = document.getElementById("printPasswordInput");
+      if (input) input.value = "";
+    }
+
+    async function checkPrintAuth(val) {
+      if (window.crypto && crypto.subtle) {
+        try {
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+          const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+          return hash === '7ba7d31bfa1ed86327ecfa9deb2dd8a44488fba943ca78c86c1e21f2d1be0a10';
+        } catch (e) {}
+      }
+      return btoa(val) === 'MTMzMQ==';
+    }
+
+    async function verifyPrintPassword(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const input = document.getElementById("printPasswordInput");
+      const err = document.getElementById("printPasswordError");
+      const val = input ? input.value : "";
+
+      const isValid = await checkPrintAuth(val);
+      if (isValid) {
+        closePrintAuthModal();
+        setTimeout(() => {
+          window.print();
+        }, 200);
+      } else {
+        if (err) err.style.display = "block";
+        if (input) {
+          input.style.borderColor = "#dc2626";
+          input.value = "";
+          input.focus();
+        }
+      }
+    }
+
+    // Cerrar modales con tecla Escape y clic fuera
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closePrintAuthModal();
+        closeSheetModal();
+      }
+    });
+    window.addEventListener("click", (e) => {
+      const pModal = document.getElementById("printAuthModal");
+      if (e.target === pModal) closePrintAuthModal();
+      const sModal = document.getElementById("sheetModal");
+      if (e.target === sModal) closeSheetModal();
+    });
 
     // Sincronización de datos del estudiante para pantalla e impresión
     function syncStudentData() {
