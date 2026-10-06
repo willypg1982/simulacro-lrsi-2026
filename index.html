@@ -83,6 +83,8 @@
     .btn-sheet:hover { background: #0284c7; color: white; }
     .btn-review-pdf { background: #16a34a; color: #ffffff; }
     .btn-review-pdf:hover { background: #15803d; }
+    .btn-teacher { background: #4f46e5; color: #ffffff; }
+    .btn-teacher:hover { background: #4338ca; }
 
     .score-badge {
       background: rgba(255,255,255,0.25);
@@ -97,6 +99,98 @@
     }
     .score-badge:hover {
       background: rgba(255,255,255,0.35);
+    }
+
+    /* Estilos del Reporte del Docente */
+    .teacher-report-modal-content {
+      max-width: 1000px;
+      width: 96%;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.8rem;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+    .teacher-report-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.2rem;
+    }
+    .teacher-search-input {
+      padding: 0.5rem 0.8rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      min-width: 220px;
+      outline: none;
+    }
+    .teacher-search-input:focus {
+      border-color: #4f46e5;
+    }
+    .teacher-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .teacher-kpi-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      text-align: center;
+    }
+    .teacher-kpi-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .teacher-kpi-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+    .teacher-report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.88rem;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .teacher-report-table th {
+      background: #1e3a8a;
+      color: white;
+      padding: 0.65rem 0.5rem;
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-align: center;
+      border: 1px solid #1e3a8a;
+    }
+    .teacher-report-table td {
+      padding: 0.6rem 0.5rem;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      color: #1e293b;
+    }
+    .teacher-report-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .teacher-report-table tr:hover {
+      background: #f1f5f9;
     }
 
     main { max-width: 950px; margin: 1.8rem auto; padding: 0 1rem; }
@@ -959,6 +1053,33 @@
         background-color: #0d9488 !important;
         color: #ffffff !important;
       }
+
+      /* Modo Impresión del Reporte del Docente */
+      body.teacher-report-print-mode main,
+      body.teacher-report-print-mode header,
+      body.teacher-report-print-mode .exam-cover-page,
+      body.teacher-report-print-mode .print-page-table {
+        display: none !important;
+      }
+      body.teacher-report-print-mode #teacherReportModal {
+        display: block !important;
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      body.teacher-report-print-mode .teacher-report-modal-content {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      body.teacher-report-print-mode .no-print-report {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -978,6 +1099,7 @@
         <button class="btn-sheet" onclick="openSheetModal()">📋 Hoja Respuestas</button>
         <button id="btnDownloadReview" class="btn-review-pdf" style="display: none;" onclick="downloadExamPDF()">📥 Descargar Examen Resuelto (PDF)</button>
         <button class="btn-pdf" onclick="openPrintAuthModal()">🔒 Imprimir Examen en Blanco</button>
+        <button class="btn-teacher" onclick="openTeacherAuthModal()">📊 Reporte del Profesor</button>
       </div>
     </div>
   </header>
@@ -1151,6 +1273,160 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Clave de Autorización para Reporte del Profesor -->
+  <div id="teacherAuthModal" class="modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 12px; padding: 1.8rem 1.5rem;">
+      <div style="width: 52px; height: 52px; background: #e0e7ff; color: #4338ca; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem auto; font-size: 1.6rem; border: 1.5px solid #c7d2fe;">
+        📊
+      </div>
+      <h3 style="color: #1e3a8a; margin-bottom: 0.3rem; font-size: 1.25rem;">Reporte del Docente</h3>
+      <p style="font-size: 0.86rem; color: #64748b; margin-bottom: 1.2rem; line-height: 1.4;">
+        Ingrese la clave numérica de 4 dígitos para acceder al consolidado de resultados en tiempo real:
+      </p>
+
+      <form onsubmit="verifyTeacherPin(event)">
+        <div style="margin-bottom: 1.2rem;">
+          <input 
+            type="password" 
+            id="teacherPinInput" 
+            placeholder="••••" 
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            style="width: 100%; max-width: 180px; padding: 0.65rem 1rem; font-size: 1.5rem; letter-spacing: 0.5rem; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);"
+          >
+          <div id="teacherPinError" style="color: #dc2626; font-size: 0.84rem; font-weight: 600; margin-top: 0.5rem; display: none;">
+            ✕ Clave incorrecta. Intente nuevamente.
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem; justify-content: center;">
+          <button type="button" onclick="closeTeacherAuthModal()" style="background: #e2e8f0; color: #334155; padding: 0.55rem 1.2rem; font-size: 0.9rem;">
+            Cancelar
+          </button>
+          <button type="submit" style="background: #4f46e5; color: white; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+            Ingresar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal / Pantalla del Reporte Consolidado del Profesor -->
+  <div id="teacherReportModal" class="modal" style="align-items: flex-start; padding: 25px 12px; overflow-y: auto;">
+    <div class="teacher-report-modal-content" id="teacherReportPrintArea">
+      
+      <!-- Barra de herramientas (visible en pantalla, oculta en impresión) -->
+      <div class="teacher-report-toolbar no-print-report">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <span style="font-weight: 700; color: #1e3a8a; font-size: 1rem;">📊 Panel de Resultados</span>
+          <span id="teacherReportStatus" style="font-size: 0.82rem; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+            Conectando...
+          </span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <input 
+            type="text" 
+            id="teacherSearchInput" 
+            class="teacher-search-input" 
+            placeholder="🔍 Buscar estudiante o sección..." 
+            oninput="filterTeacherReport()"
+          >
+          <button type="button" onclick="loadTeacherReportData()" style="background: #0284c7; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+            🔄 Actualizar
+          </button>
+          <button type="button" onclick="printTeacherReport()" style="background: #16a34a; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+            🖨️ Imprimir / PDF
+          </button>
+          <button type="button" onclick="closeTeacherReportModal()" style="background: #e2e8f0; color: #334155; font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+            ✖ Cerrar
+          </button>
+        </div>
+      </div>
+
+      <!-- Encabezado Institucional idéntico al examen -->
+      <div class="cover-header" style="text-align: center; margin-bottom: 14px; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px;">
+        <img src="encabezado.png" alt="Ministerio de Educación Pública - Liceo Rural San Isidro" class="cover-header-img" style="max-width: 900px; width: 100%; height: auto; display: block; margin: 0 auto;">
+      </div>
+
+      <div class="cover-title-box" style="text-align: center; margin-bottom: 1.2rem;">
+        <h3 class="cover-institution" style="font-size: 1.3rem; color: #1e3a8a; font-weight: 800; letter-spacing: 0.5px;">LICEO RURAL SAN ISIDRO</h3>
+        <p class="cover-subtitle" style="font-size: 0.85rem; color: #475569; font-weight: 600;">Dirección Regional de Educación Los Santos • Circuito Escolar 03</p>
+        <h1 class="cover-main-title" style="font-size: 1.55rem; color: #0f172a; margin: 6px 0; font-weight: 800;">REPORTE CONSOLIDADO DE RESULTADOS</h1>
+        <p class="cover-exam-type" style="font-size: 0.92rem; color: #0d9488; font-weight: 700;">Simulacro de Matemáticas 2026 • Bachillerato / MEP</p>
+        <div class="cover-teacher-badge" style="display: inline-block; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.3rem 1rem; border-radius: 9999px; font-size: 0.88rem; margin-top: 6px;">
+          <strong>Docente:</strong> Profesor William Pineda González
+        </div>
+      </div>
+
+      <!-- Resumen Estadístico (KPIs) -->
+      <div class="teacher-kpi-grid">
+        <div class="teacher-kpi-card">
+          <span class="teacher-kpi-label">Estudiantes</span>
+          <span id="kpiTotalStudents" class="teacher-kpi-val">0</span>
+        </div>
+        <div class="teacher-kpi-card">
+          <span class="teacher-kpi-label">Promedio</span>
+          <span id="kpiAvgScore" class="teacher-kpi-val">0%</span>
+        </div>
+        <div class="teacher-kpi-card">
+          <span class="teacher-kpi-label">Aprobados (≥70)</span>
+          <span id="kpiApproved" class="teacher-kpi-val" style="color: #16a34a;">0</span>
+        </div>
+        <div class="teacher-kpi-card">
+          <span class="teacher-kpi-label">Aplazados (&lt;70)</span>
+          <span id="kpiFailed" class="teacher-kpi-val" style="color: #dc2626;">0</span>
+        </div>
+        <div class="teacher-kpi-card">
+          <span class="teacher-kpi-label">Tiempo Promedio</span>
+          <span id="kpiAvgTime" class="teacher-kpi-val" style="font-size: 1.1rem; color: #0284c7;">--</span>
+        </div>
+      </div>
+
+      <!-- Tabla de Resultados Exclusiva con las 7 Columnas Solicitadas -->
+      <div style="overflow-x: auto;">
+        <table class="teacher-report-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">Marca Temporal</th>
+              <th style="width: 25%;">Estudiante</th>
+              <th style="width: 10%;">Sección</th>
+              <th style="width: 12%;">Porcentaje / Nota</th>
+              <th style="width: 12%;">Preguntas Buenas</th>
+              <th style="width: 12%;">Preguntas Incorrectas</th>
+              <th style="width: 14%;">Tiempo de Examen</th>
+            </tr>
+          </thead>
+          <tbody id="teacherReportTableBody">
+            <tr>
+              <td colspan="7" style="padding: 2rem; color: #64748b; font-style: italic;">
+                Cargando registros...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mensaje informativo de Google Sheets -->
+      <div id="teacherScriptNotice" class="no-print-report" style="display: none; margin-top: 1.2rem; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 8px; padding: 1rem; text-align: left;">
+        <h4 style="color: #b45309; font-size: 0.95rem; margin-bottom: 0.4rem;">ℹ️ Para consultar directamente la Hoja de Cálculo en tiempo real:</h4>
+        <p style="font-size: 0.85rem; color: #78350f; line-height: 1.5;">
+          Recuerda agregar la función <code>doGet(e)</code> en tu proyecto de Google Apps Script para permitir que la web lea las filas de la hoja.
+        </p>
+      </div>
+
+      <!-- Firmas al pie del reporte (para imprimir) -->
+      <div class="cover-signatures-box" style="margin-top: 2rem; padding-top: 1rem;">
+        <div class="sig-col" style="margin: 0 auto; width: 50%;">
+          <div class="sig-line"></div>
+          <span>Profesor William Pineda González<br><small style="color: #64748b;">Docente de Matemáticas</small></span>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2528,6 +2804,279 @@
       }
     }
 
+    // =========================================================================
+    // REPORTE DEL PROFESOR (ACCESO CON CLAVE 1331 Y TABLA EN TIEMPO REAL)
+    // =========================================================================
+    function openTeacherAuthModal() {
+      const modal = document.getElementById("teacherAuthModal");
+      const input = document.getElementById("teacherPinInput");
+      const err = document.getElementById("teacherPinError");
+      if (err) err.style.display = "none";
+      if (input) {
+        input.value = "";
+        input.style.borderColor = "#cbd5e1";
+      }
+      modal.style.display = "flex";
+      setTimeout(() => { if (input) input.focus(); }, 100);
+    }
+
+    function closeTeacherAuthModal() {
+      const modal = document.getElementById("teacherAuthModal");
+      if (modal) modal.style.display = "none";
+      const input = document.getElementById("teacherPinInput");
+      if (input) input.value = "";
+    }
+
+    function verifyTeacherPin(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const input = document.getElementById("teacherPinInput");
+      const err = document.getElementById("teacherPinError");
+      const val = input ? input.value.trim() : "";
+
+      if (val === "1331") {
+        closeTeacherAuthModal();
+        openTeacherReportModal();
+      } else {
+        if (err) err.style.display = "block";
+        if (input) {
+          input.style.borderColor = "#dc2626";
+          input.value = "";
+          input.focus();
+        }
+      }
+    }
+
+    function openTeacherReportModal() {
+      const modal = document.getElementById("teacherReportModal");
+      if (modal) {
+        modal.style.display = "flex";
+        loadTeacherReportData();
+      }
+    }
+
+    function closeTeacherReportModal() {
+      const modal = document.getElementById("teacherReportModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function printTeacherReport() {
+      document.body.classList.add("teacher-report-print-mode");
+      setTimeout(() => {
+        window.print();
+        const cleanup = () => {
+          document.body.classList.remove("teacher-report-print-mode");
+          window.removeEventListener("afterprint", cleanup);
+        };
+        window.addEventListener("afterprint", cleanup, { once: true });
+        setTimeout(() => {
+          document.body.classList.remove("teacher-report-print-mode");
+        }, 2500);
+      }, 200);
+    }
+
+    let teacherNormalizedRecords = [];
+
+    async function loadTeacherReportData() {
+      const statusEl = document.getElementById("teacherReportStatus");
+      const tbody = document.getElementById("teacherReportTableBody");
+      const notice = document.getElementById("teacherScriptNotice");
+      if (statusEl) {
+        statusEl.innerHTML = "⏳ Consultando datos en vivo...";
+        statusEl.style.color = "#0369a1";
+        statusEl.style.background = "#e0f2fe";
+      }
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding: 2rem; color: #64748b; font-style: italic;">⏳ Cargando registros en tiempo real...</td></tr>`;
+      }
+
+      let fetchedRows = [];
+      let liveSuccess = false;
+
+      // Intentar leer de Google Sheets vía GET
+      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        try {
+          const resp = await fetch(GOOGLE_SHEETS_SCRIPT_URL);
+          if (resp.ok) {
+            const result = await resp.json();
+            if (result && Array.isArray(result.data)) {
+              fetchedRows = result.data;
+              liveSuccess = true;
+            }
+          }
+        } catch (err) {
+          console.warn("Consulta GET a Google Sheets no disponible o requiere doGet:", err);
+        }
+      }
+
+      // Obtener también registros guardados localmente
+      let localRecords = [];
+      try {
+        localRecords = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+      } catch (e) {}
+
+      if (liveSuccess) {
+        if (statusEl) {
+          statusEl.innerHTML = "✔ Conectado a Google Sheets en tiempo real";
+          statusEl.style.color = "#15803d";
+          statusEl.style.background = "#dcfce7";
+        }
+        if (notice) notice.style.display = "none";
+      } else {
+        if (statusEl) {
+          if (localRecords.length > 0) {
+            statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) recientes del navegador`;
+            statusEl.style.color = "#b45309";
+            statusEl.style.background = "#fef3c7";
+          } else {
+            statusEl.innerHTML = "ℹ️ Listo para registrar respuestas";
+            statusEl.style.color = "#475569";
+            statusEl.style.background = "#f1f5f9";
+          }
+        }
+        if (notice && (!fetchedRows || fetchedRows.length === 0)) {
+          notice.style.display = "block";
+        }
+      }
+
+      parseAndRenderTeacherRecords(fetchedRows, localRecords);
+    }
+
+    function parseAndRenderTeacherRecords(fetchedRows, localRecords) {
+      const records = [];
+
+      // Procesar filas de Google Sheets si existen
+      if (fetchedRows && fetchedRows.length > 0) {
+        let headers = [];
+        let startIndex = 0;
+        // Revisar si la primera fila son encabezados
+        const firstRowStr = fetchedRows[0].join(" ").toLowerCase();
+        if (firstRowStr.includes("fecha") || firstRowStr.includes("estudiante") || firstRowStr.includes("nombre")) {
+          headers = fetchedRows[0].map(h => String(h).trim().toLowerCase());
+          startIndex = 1;
+        }
+
+        const getIdx = (regex, fallback) => {
+          const idx = headers.findIndex(h => regex.test(h));
+          return idx !== -1 ? idx : fallback;
+        };
+
+        const fIdx = getIdx(/fecha|marca/, 0);
+        const eIdx = getIdx(/estudiante|nombre/, 1);
+        const sIdx = getIdx(/secci[oó]n/, 2);
+        const pctIdx = getIdx(/porcentaje|nota/, 5);
+        const bIdx = getIdx(/correcta|buena|punto/, 9);
+        const iIdx = getIdx(/incorrecta|mala/, 10);
+        const tIdx = getIdx(/tiempo|duraci[oó]n/, 8);
+
+        for (let i = startIndex; i < fetchedRows.length; i++) {
+          const row = fetchedRows[i];
+          if (!row || row.length === 0 || !row[eIdx]) continue;
+          records.push({
+            fecha: row[fIdx] || "--",
+            estudiante: row[eIdx] || "--",
+            seccion: row[sIdx] || "--",
+            porcentaje: row[pctIdx] !== undefined ? `${row[pctIdx]}%` : "--",
+            porcentajeNum: parseFloat(row[pctIdx]) || 0,
+            buenas: row[bIdx] !== undefined ? row[bIdx] : "--",
+            incorrectas: row[iIdx] !== undefined ? row[iIdx] : "--",
+            tiempo: row[tIdx] || "--"
+          });
+        }
+      }
+
+      // Si no hay de Google Sheets, utilizar los locales
+      if (records.length === 0 && localRecords && localRecords.length > 0) {
+        localRecords.forEach(r => {
+          records.push({
+            fecha: r.fecha || "--",
+            estudiante: r.estudiante || "--",
+            seccion: r.seccion || "--",
+            porcentaje: r.porcentaje ? `${r.porcentaje}%` : (r.nota ? `${r.nota}%` : "--"),
+            porcentajeNum: parseFloat(r.porcentaje || r.nota) || 0,
+            buenas: r.correctas !== undefined ? r.correctas : (r.puntos !== undefined ? r.puntos : "--"),
+            incorrectas: r.incorrectas !== undefined ? r.incorrectas : "--",
+            tiempo: r.tiempo || "--"
+          });
+        });
+      }
+
+      teacherNormalizedRecords = records;
+      filterTeacherReport();
+    }
+
+    function filterTeacherReport() {
+      const searchInput = document.getElementById("teacherSearchInput");
+      const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+      const tbody = document.getElementById("teacherReportTableBody");
+
+      const filtered = teacherNormalizedRecords.filter(r => {
+        if (!term) return true;
+        return (
+          r.estudiante.toLowerCase().includes(term) ||
+          r.seccion.toLowerCase().includes(term) ||
+          r.fecha.toLowerCase().includes(term)
+        );
+      });
+
+      // Actualizar indicadores (KPIs)
+      document.getElementById("kpiTotalStudents").innerText = filtered.length;
+      if (filtered.length > 0) {
+        const sumPct = filtered.reduce((acc, curr) => acc + (curr.porcentajeNum || 0), 0);
+        const avg = (sumPct / filtered.length).toFixed(1);
+        document.getElementById("kpiAvgScore").innerText = `${avg}%`;
+
+        const approved = filtered.filter(r => (r.porcentajeNum || 0) >= 70).length;
+        document.getElementById("kpiApproved").innerText = approved;
+        document.getElementById("kpiFailed").innerText = filtered.length - approved;
+
+        // Tiempo más representativo o promedio
+        const times = filtered.map(r => r.tiempo).filter(t => t && t !== "--");
+        document.getElementById("kpiAvgTime").innerText = times.length > 0 ? times[0] : "--";
+      } else {
+        document.getElementById("kpiAvgScore").innerText = "0%";
+        document.getElementById("kpiApproved").innerText = "0";
+        document.getElementById("kpiFailed").innerText = "0";
+        document.getElementById("kpiAvgTime").innerText = "--";
+      }
+
+      // Renderizar filas de la tabla
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
+              ${term ? "No se encontraron estudiantes que coincidan con la búsqueda." : "Aún no se han registrado respuestas de estudiantes."}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = "";
+      filtered.forEach((r, idx) => {
+        const isAppr = (r.porcentajeNum || 0) >= 70;
+        const badgeColor = isAppr ? "#15803d" : "#b91c1c";
+        const badgeBg = isAppr ? "#dcfce7" : "#fee2e2";
+
+        html += `
+          <tr>
+            <td style="color: #64748b; font-size: 0.82rem; font-weight: 500;">${r.fecha}</td>
+            <td style="text-align: left; font-weight: 700; color: #1e3a8a;">${r.estudiante}</td>
+            <td><span style="background: #e2e8f0; color: #334155; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.82rem;">${r.seccion}</span></td>
+            <td>
+              <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 800; font-size: 0.85rem;">
+                ${r.porcentaje}
+              </span>
+            </td>
+            <td style="color: #16a34a; font-weight: 700;">${r.buenas}</td>
+            <td style="color: #dc2626; font-weight: 700;">${r.incorrectas}</td>
+            <td style="color: #0284c7; font-weight: 600;">${r.tiempo}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
     // Variables globales de estado
     let currentUnanswered = [];
     window.lastExamResult = null;
@@ -2536,6 +3085,8 @@
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closePrintAuthModal();
+        closeTeacherAuthModal();
+        closeTeacherReportModal();
         closeSheetModal();
         closeIncompleteModal();
         closeScoreModal();
@@ -2544,6 +3095,10 @@
     window.addEventListener("click", (e) => {
       const pModal = document.getElementById("printAuthModal");
       if (e.target === pModal) closePrintAuthModal();
+      const tAuthModal = document.getElementById("teacherAuthModal");
+      if (e.target === tAuthModal) closeTeacherAuthModal();
+      const tRepModal = document.getElementById("teacherReportModal");
+      if (e.target === tRepModal) closeTeacherReportModal();
       const sModal = document.getElementById("sheetModal");
       if (e.target === sModal) closeSheetModal();
       const incModal = document.getElementById("incompleteModal");
@@ -2724,6 +3279,13 @@
 
     // Envío silencioso de resultados a Google Sheets
     function sendResultsToGoogleSheets(payload) {
+      // Guardar copia local para vista y respaldo inmediato del profesor
+      try {
+        const stored = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+        stored.unshift(payload);
+        localStorage.setItem("lrsi_saved_results", JSON.stringify(stored.slice(0, 100)));
+      } catch (e) {}
+
       const statusEl = document.getElementById("sheetsSyncStatus");
       if (!GOOGLE_SHEETS_SCRIPT_URL || GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         if (statusEl) {
