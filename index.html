@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prueba de Matemáticas - Bachillerato / MEP</title>
+
+  <!-- KaTeX: Tipografía matemática oficial (variables y exponentes) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
   <style>
     :root {
       --primary: #1e3a8a;
@@ -21,6 +27,23 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+    /* Tipografía matemática con KaTeX */
+    .katex {
+      font-size: 1.08em;
+      line-height: 1.2;
+    }
+    .option-label .katex {
+      font-size: 1.12em;
+    }
+    .q-header-text .katex, .q-footer-text .katex {
+      font-size: 1.05em;
+    }
+    @media print {
+      .katex {
+        font-size: 1em !important;
+      }
+    }
 
     header {
       background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -1298,6 +1321,114 @@
       }
     }
 
+    // =========================================================================
+    // RENDERIZADO MATEMÁTICO CON KATEX (Variables x, y y exponentes elevados)
+    // =========================================================================
+    function cleanLatex(s) {
+      return s
+        .replace(/·/g, "\\cdot ")
+        .replace(/√\(\(([^\)]+)\)\/(\d+)\)/g, "\\sqrt{\\frac{$1}{$2}}")
+        .replace(/√\(([^)]+)\)/g, "\\sqrt{$1}")
+        .replace(/√([0-9a-zA-Z]+)/g, "\\sqrt{$1}")
+        .replace(/²/g, "^2")
+        .replace(/³/g, "^3")
+        .replace(/⁴/g, "^4")
+        .replace(/⁵/g, "^5")
+        .replace(/⁰/g, "^0")
+        .replace(/ˣ/g, "^x")
+        .replace(/⁻¹/g, "^{-1}")
+        .replace(/₂/g, "_2")
+        .replace(/log₂\(([^\)]+)\)/g, "\\log_2($1)")
+        .replace(/log₂/g, "\\log_2")
+        .replace(/log_a\(x\)/g, "\\log_a(x)")
+        .replace(/∘/g, "\\circ")
+        .replace(/≤/g, "\\le")
+        .replace(/≥/g, "\\ge")
+        .replace(/π/g, "\\pi")
+        .replace(/⟹/g, "\\implies")
+        .replace(/⟶/g, "\\longrightarrow")
+        .replace(/≈/g, "\\approx")
+        .replace(/×/g, "\\times")
+        .replace(/(\d+),(\d+)/g, "$1{,}$2");
+    }
+
+    function formatMathForKaTeX(text) {
+      if (!text || typeof text !== "string") return text;
+      if (text.trim().startsWith("<svg")) return text;
+
+      let res = text;
+
+      // 1. Ejes con comillas o directos: eje "x", eje "y", ("x"), ("y"), eje x, eje y
+      res = res.replace(/eje\s+["“«]([xy])["”»]/gi, (m, v) => "eje $" + v.toLowerCase() + "$");
+      res = res.replace(/\(["“«]([xy])["”»]\)/gi, (m, v) => "($" + v.toLowerCase() + "$)");
+      res = res.replace(/\beje\s+([xy])\b/gi, (m, v) => "eje $" + v.toLowerCase() + "$");
+
+      // 2. Variables y funciones entre comillas: "v(x)", "h(x)", "x", "y", "t", "r(c)", etc.
+      res = res.replace(/["“«]([a-z]\([a-z]\))["”»]/gi, (m, f) => "$" + cleanLatex(f) + "$");
+      res = res.replace(/["“«]([xyztcr])["”»]/gi, (m, v) => "$" + v + "$");
+
+      // 3. Unidades con exponentes (cm², m², etc.)
+      res = res.replace(/\b(cm|m|km|ha)²\b/gi, (m, u) => "$\\text{" + u + "}^2$");
+      res = res.replace(/\b(cm|m|km)³\b/gi, (m, u) => "$\\text{" + u + "}^3$");
+
+      // 4. Fórmulas de circunferencia completas: (x - h)² + (y - k)² = ...
+      res = res.replace(/\((?:x\s*[-+]\s*[^)]+|x)\)²\s*\+\s*\((?:y\s*[-+]\s*[^)]+|y)\)²\s*=\s*[^,;.\n]+/gi, (m) => "$" + cleanLatex(m.trim()) + "$");
+
+      // 5. Intervalos de dominio comunes en los enunciados: con 0 ≤ x ≤ 10, etc.
+      res = res.replace(/(\d+)\s*≤\s*([xct])\s*≤\s*(\d+)/gi, (m, a, v, b) => "$" + a + " \\le " + v + " \\le " + b + "$");
+      res = res.replace(/(\d+)\s*<\s*([xct])\s*≤\s*(\d+)/gi, (m, a, v, b) => "$" + a + " < " + v + " \\le " + b + "$");
+
+      // 6. Expresiones de funciones en enunciados: f(x) = ..., g(x) = ..., h(x) = ...
+      res = res.replace(/\b([a-z]\([a-z]\)\s*=\s*(?:[0-9a-zA-Z\s\+\-\*\/\^\(\)²³⁴⁵⁰ˣ⁻¹₂∘≤≥π√·]+|,\d+)+)(?=,?\s*(?:donde|con|para|\.|\n|$))/gi, (m, expr) => {
+        return "$" + cleanLatex(expr.trim()) + "$";
+      });
+
+      // 7. Ecuaciones simples de rectas o variables en enunciados/footers: recta dada por x = 5, recta y = -3, y = -x, OD = 5√2
+      res = res.replace(/\b(recta(?: dada por)?)\s+([xy]\s*=\s*-?\d+|[xy]\s*=\s*-?[xy])/gi, (m, prefix, eq) => {
+        return prefix + " $" + cleanLatex(eq) + "$";
+      });
+      res = res.replace(/\bOD\s*=\s*5√2\b/g, "$OD = 5\\sqrt{2}$");
+
+      // 8. Opciones completas que son fórmulas matemáticas
+      const trimmed = res.trim();
+      const startsWithVarEq = /^[xy]\s*=\s*[\d\w\s\+\-\*\/]+$/i.test(trimmed);
+      const hasSpanishWords = /\b(igual|mayor|menor|que|por|para|con|la|el|los|las|de|en|o|recta|punto|eje|función|urbanización)\b/i.test(trimmed);
+
+      if (startsWithVarEq || (!hasSpanishWords && !/^[a-zA-Z]\s+y\s+[a-zA-Z]$/.test(trimmed))) {
+        const isMathCandidate = /^[\s\(\)\d\w\+\-\*\/=\^²³⁴⁵⁰ˣ⁻¹₂∘≤≥π√,._·]+$/.test(trimmed) &&
+          (trimmed.includes("²") || trimmed.includes("³") || trimmed.includes("√") || trimmed.includes("=") || trimmed.includes("ˣ") || trimmed.includes("log") || trimmed.includes("∘") || startsWithVarEq);
+
+        if (isMathCandidate) {
+          return "$" + cleanLatex(trimmed) + "$";
+        }
+      }
+
+      // 9. Reemplazo de variables aisladas con exponentes como x², y², t² en texto
+      res = res.replace(/\b([xyzt])²\b/gi, (m, v) => "$" + v + "^2$");
+      res = res.replace(/\b([xyzt])³\b/gi, (m, v) => "$" + v + "^3$");
+
+      return res;
+    }
+
+    function renderAllMath() {
+      if (typeof renderMathInElement === "function") {
+        try {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "$", right: "$", display: false }
+            ],
+            ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "svg"],
+            throwOnError: false
+          });
+        } catch (e) {
+          console.warn("Error renderizando KaTeX:", e);
+        }
+      } else {
+        setTimeout(renderAllMath, 120);
+      }
+    }
+
     // Gráficos SVG idénticos a los del examen original
     const svgs = {
       q1_A: `<svg width="180" height="150" viewBox="0 0 180 150">
@@ -2280,21 +2411,22 @@
       card.id = `card-${q.id}`;
 
       let graphicHTML = q.graphic ? `<div class="diagram-container">${q.graphic}</div>` : "";
-      let footerHTML = q.footer ? `<div class="q-footer-text">${q.footer}</div>` : "";
+      let footerHTML = q.footer ? `<div class="q-footer-text">${formatMathForKaTeX(q.footer)}</div>` : "";
 
       let optionsHTML = "";
       q.options.forEach((opt, idx) => {
         const letter = letters[idx];
+        const formattedOpt = formatMathForKaTeX(opt);
         optionsHTML += `
           <label class="option-label" id="label-${q.id}-${letter}">
             <input type="radio" name="q${q.id}" value="${letter}" onchange="syncSheet(${q.id}, '${letter}')">
-            <span class="opt-text"><strong>${letter})</strong> ${opt}</span>
+            <span class="opt-text"><strong>${letter})</strong> ${formattedOpt}</span>
           </label>
         `;
       });
 
       card.innerHTML = `
-        <div class="q-header-text">${q.header}</div>
+        <div class="q-header-text">${formatMathForKaTeX(q.header)}</div>
         ${graphicHTML}
         ${footerHTML}
         <div class="options">${optionsHTML}</div>
@@ -2302,6 +2434,11 @@
       `;
       container.appendChild(card);
     });
+
+    // Renderizar tipografía KaTeX al cargar las preguntas
+    renderAllMath();
+    window.addEventListener("DOMContentLoaded", renderAllMath);
+    window.addEventListener("load", renderAllMath);
 
     // Llenado de Hoja de Respuestas
     const sheetGrid = document.getElementById("sheetGrid");
@@ -2730,13 +2867,16 @@
         if (selectedVal === q.answer) {
           score++;
           feedback.className = "feedback correct-feedback";
-          feedback.innerHTML = `<strong>✔ ¡Correcto! Tu respuesta: ${q.answer}</strong><div style="margin-top: 4px;">${q.exp}</div>`;
+          feedback.innerHTML = `<strong>✔ ¡Correcto! Tu respuesta: ${q.answer}</strong><div style="margin-top: 4px;">${formatMathForKaTeX(q.exp)}</div>`;
         } else {
           wrongQuestions.push(q.id);
           feedback.className = "feedback wrong-feedback";
-          feedback.innerHTML = `<strong>✕ Incorrecto. Tu respuesta: ${selectedVal} | Respuesta correcta: ${q.answer}</strong><div style="margin-top: 4px;">${q.exp}</div>`;
+          feedback.innerHTML = `<strong>✕ Incorrecto. Tu respuesta: ${selectedVal} | Respuesta correcta: ${q.answer}</strong><div style="margin-top: 4px;">${formatMathForKaTeX(q.exp)}</div>`;
         }
       });
+
+      // Renderizar KaTeX en las cajas de retroalimentación
+      setTimeout(renderAllMath, 50);
 
       // 3. Cálculos de nota y porcentaje
       const percentage = ((score / questionsData.length) * 100).toFixed(1);
