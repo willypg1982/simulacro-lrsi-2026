@@ -85,6 +85,24 @@
     .btn-review-pdf:hover { background: #15803d; }
     .btn-teacher { background: #4f46e5; color: #ffffff; }
     .btn-teacher:hover { background: #4338ca; }
+    .btn-fullscreen {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      padding: 0.55rem 0.95rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+    .btn-fullscreen:hover {
+      background: rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+    }
 
     .score-badge {
       background: rgba(255,255,255,0.25);
@@ -191,6 +209,227 @@
     }
     .teacher-report-table tr:hover {
       background: #f1f5f9;
+    }
+
+    /* Navegación Pregunta por Pregunta */
+    @media screen {
+      .question-card {
+        display: none;
+      }
+      .question-card.active-question {
+        display: block;
+        animation: fadeInQuestion 0.25s ease-in-out;
+      }
+    }
+    @keyframes fadeInQuestion {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Panel de Navegación del 1 al 60 */
+    .exam-nav-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.3rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .nav-panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .nav-panel-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .nav-badge-current {
+      background: var(--primary);
+      color: white;
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+    .nav-badge-progress {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .btn-cover-shortcut {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .btn-cover-shortcut:hover {
+      background: #cbd5e1;
+    }
+    .nav-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      flex-wrap: wrap;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .legend-box {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .legend-box.answered {
+      background: #16a34a;
+    }
+    .legend-box.unanswered {
+      background: #dc2626;
+    }
+    .legend-box.current {
+      background: #ffffff;
+      border: 2px solid #1e3a8a;
+      box-shadow: 0 0 0 1.5px #f59e0b;
+    }
+    .nav-progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 0.9rem;
+    }
+    .nav-progress-bar {
+      height: 100%;
+      background: #16a34a;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .nav-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+      gap: 6px;
+    }
+    .q-nav-btn {
+      width: 100%;
+      height: 36px;
+      padding: 0;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      border: 1.5px solid transparent;
+      user-select: none;
+    }
+    .q-nav-btn.unanswered {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #b91c1c;
+    }
+    .q-nav-btn.unanswered:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+    .q-nav-btn.answered {
+      background: #16a34a;
+      color: #ffffff;
+      border-color: #15803d;
+    }
+    .q-nav-btn.answered:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+    .q-nav-btn.current {
+      outline: 3px solid #1e3a8a !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 4px #f59e0b !important;
+      transform: scale(1.08);
+      z-index: 3;
+    }
+
+    /* Controles de Navegación Anterior / Siguiente */
+    .question-nav-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 2rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1.2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .btn-nav-action {
+      padding: 0.65rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-nav-action.prev {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .btn-nav-action.prev:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+    .btn-nav-action.next {
+      background: #1e3a8a;
+      color: #ffffff;
+    }
+    .btn-nav-action.next:hover {
+      background: #1e40af;
+    }
+    .btn-nav-action.finish {
+      background: #f59e0b;
+      color: #1e293b;
+    }
+    .btn-nav-action.finish:hover {
+      background: #d97706;
+      color: #ffffff;
+    }
+    .nav-counter-center {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.05rem;
     }
 
     main { max-width: 950px; margin: 1.8rem auto; padding: 0 1rem; }
@@ -760,7 +999,8 @@
         size: letter portrait;
         margin: 8mm 12mm 10mm 12mm;
       }
-      header, .btn-group, .feedback, .modal { display: none !important; }
+      header, .btn-group, .feedback, .modal, .exam-nav-panel, .question-nav-controls, .btn-fullscreen, .no-print { display: none !important; }
+      .question-card { display: block !important; }
       body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
 
@@ -1100,6 +1340,7 @@
         <button id="btnDownloadReview" class="btn-review-pdf" style="display: none;" onclick="downloadExamPDF()">📥 Descargar Examen Resuelto (PDF)</button>
         <button class="btn-pdf" onclick="openPrintAuthModal()">🔒 Imprimir Examen en Blanco</button>
         <button class="btn-teacher" onclick="openTeacherAuthModal()">📊 Reporte del Profesor</button>
+        <button id="btnFullscreen" class="btn-fullscreen" onclick="toggleFullscreen()" title="Alternar Pantalla Completa">⛶ Pantalla Completa</button>
       </div>
     </div>
   </header>
@@ -1148,6 +1389,12 @@
             <span class="cover-badge-conv">Ordinaria 2026</span>
           </div>
         </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 1rem; margin-bottom: 0.5rem;" class="no-print">
+        <button type="button" onclick="goToQuestion(1)" style="background: #1e3a8a; color: white; padding: 0.65rem 1.6rem; font-size: 0.95rem; border-radius: 8px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: none;">
+          ▶ Comenzar Examen (Pregunta 1)
+        </button>
       </div>
 
       <!-- Tabla de Especificaciones y Calificación -->
@@ -1203,6 +1450,43 @@
       </div>
     </section>
 
+    <!-- ==================== PANEL DE NAVEGACIÓN 1 A 60 ==================== -->
+    <section class="exam-nav-panel" id="examNavPanel">
+      <div class="nav-panel-header">
+        <div class="nav-panel-left">
+          <span class="nav-badge-current">Pregunta <strong id="navCurrentIndicator">1</strong> de 60</span>
+          <span class="nav-badge-progress" id="navProgressBadge">0 / 60 Contestadas</span>
+          <button type="button" class="btn-cover-shortcut no-print" onclick="scrollToCover()" title="Ver datos del estudiante e instrucciones">
+            📋 Portada / Datos
+          </button>
+        </div>
+        
+        <!-- Simbología de colores solicitada -->
+        <div class="nav-legend">
+          <div class="legend-item">
+            <span class="legend-box answered"></span>
+            <span>Contestada (Verde)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-box unanswered"></span>
+            <span>Falta de contestar (Rojo)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-box current"></span>
+            <span>Pregunta actual</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de progreso visual -->
+      <div class="nav-progress-bar-container">
+        <div class="nav-progress-bar" id="navProgressBar" style="width: 0%;"></div>
+      </div>
+
+      <!-- Matriz de botones del 1 al 60 -->
+      <div class="nav-buttons-grid" id="navButtonsGrid"></div>
+    </section>
+
     <!-- ==================== TABLA DEL EXAMEN (PREGUNTAS) ==================== -->
     <table class="print-page-table">
       <thead>
@@ -1218,6 +1502,19 @@
         <tr>
           <td>
             <div id="examContainer"></div>
+
+            <!-- Controles de Navegación entre Preguntas (Anterior / Siguiente) -->
+            <div class="question-nav-controls" id="questionNavControls">
+              <button type="button" id="btnPrevQ" class="btn-nav-action prev" onclick="goToPrevQuestion()">
+                ⬅ Anterior
+              </button>
+              <div class="nav-counter-center">
+                <span id="navQuestionTitle">Pregunta 1 de 60</span>
+              </div>
+              <button type="button" id="btnNextQ" class="btn-nav-action next" onclick="goToNextQuestion()">
+                Siguiente ➡
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -2685,6 +2982,9 @@
       const card = document.createElement("div");
       card.className = "question-card";
       card.id = `card-${q.id}`;
+      if (q.id === 1) {
+        card.classList.add("active-question");
+      }
 
       let graphicHTML = q.graphic ? `<div class="diagram-container">${q.graphic}</div>` : "";
       let footerHTML = q.footer ? `<div class="q-footer-text">${formatMathForKaTeX(q.footer)}</div>` : "";
@@ -2711,10 +3011,173 @@
       container.appendChild(card);
     });
 
+    // =========================================================================
+    // NAVEGACIÓN INDIVIDUAL DE PREGUNTAS Y CUADRÍCULA 1 A 60
+    // =========================================================================
+    let currentQuestionIndex = 1;
+
+    function buildNavGrid() {
+      const grid = document.getElementById("navButtonsGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      for (let i = 1; i <= 60; i++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `nav-btn-${i}`;
+        btn.className = "q-nav-btn unanswered";
+        btn.innerText = i;
+        btn.title = `Ir a la pregunta ${i}`;
+        btn.onclick = () => goToQuestion(i);
+        grid.appendChild(btn);
+      }
+    }
+
+    function updateNavGrid() {
+      let answeredCount = 0;
+      questionsData.forEach(q => {
+        const isAnswered = !!document.querySelector(`input[name="q${q.id}"]:checked`);
+        if (isAnswered) answeredCount++;
+
+        const btn = document.getElementById(`nav-btn-${q.id}`);
+        if (btn) {
+          btn.classList.remove("answered", "unanswered", "current");
+          if (isAnswered) {
+            btn.classList.add("answered");
+          } else {
+            btn.classList.add("unanswered");
+          }
+          if (q.id === currentQuestionIndex) {
+            btn.classList.add("current");
+          }
+        }
+      });
+
+      const stats = document.getElementById("navProgressBadge");
+      if (stats) stats.innerText = `${answeredCount} / 60 Contestadas`;
+      const bar = document.getElementById("navProgressBar");
+      if (bar) {
+        const pct = ((answeredCount / 60) * 100).toFixed(1);
+        bar.style.width = `${pct}%`;
+      }
+    }
+
+    function goToQuestion(n) {
+      if (n < 1 || n > 60) return;
+      currentQuestionIndex = n;
+
+      // 1. Mostrar únicamente la tarjeta de la pregunta seleccionada
+      document.querySelectorAll(".question-card").forEach(c => {
+        c.classList.remove("active-question");
+      });
+      const activeCard = document.getElementById(`card-${n}`);
+      if (activeCard) {
+        activeCard.classList.add("active-question");
+      }
+
+      // 2. Actualizar estilos de los números en la cuadrícula 1..60
+      updateNavGrid();
+
+      // 3. Actualizar textos de indicadores y botones
+      const navCur = document.getElementById("navCurrentIndicator");
+      if (navCur) navCur.innerText = n;
+      const navTitle = document.getElementById("navQuestionTitle");
+      if (navTitle) navTitle.innerText = `Pregunta ${n} de 60`;
+
+      const btnPrev = document.getElementById("btnPrevQ");
+      if (btnPrev) {
+        btnPrev.disabled = (n === 1);
+        btnPrev.style.opacity = (n === 1) ? "0.4" : "1";
+        btnPrev.style.cursor = (n === 1) ? "not-allowed" : "pointer";
+      }
+
+      const btnNext = document.getElementById("btnNextQ");
+      if (btnNext) {
+        if (n === 60) {
+          btnNext.innerHTML = "✔ Comprobar";
+          btnNext.className = "btn-nav-action finish";
+        } else {
+          btnNext.innerHTML = "Siguiente ➡";
+          btnNext.className = "btn-nav-action next";
+        }
+      }
+
+      // 4. Posicionar la vista en el panel de navegación
+      const navPanel = document.getElementById("examNavPanel");
+      if (navPanel) {
+        navPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function goToNextQuestion() {
+      if (currentQuestionIndex < 60) {
+        goToQuestion(currentQuestionIndex + 1);
+      } else {
+        gradeExam();
+      }
+    }
+
+    function goToPrevQuestion() {
+      if (currentQuestionIndex > 1) {
+        goToQuestion(currentQuestionIndex - 1);
+      }
+    }
+
+    function scrollToCover() {
+      const cover = document.getElementById("examCoverPage");
+      if (cover) {
+        cover.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    // Control de Pantalla Completa
+    function toggleFullscreen() {
+      const btn = document.getElementById("btnFullscreen");
+      if (!document.fullscreenElement) {
+        const docEl = document.documentElement;
+        const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (req) {
+          req.call(docEl).then(() => {
+            if (btn) btn.innerHTML = "🗗 Salir Pantalla Completa";
+          }).catch(err => {
+            console.warn("Fullscreen no disponible:", err);
+          });
+        }
+      } else {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+        if (exit) {
+          exit.call(document).then(() => {
+            if (btn) btn.innerHTML = "⛶ Pantalla Completa";
+          });
+        }
+      }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      const btn = document.getElementById("btnFullscreen");
+      if (btn) {
+        btn.innerHTML = document.fullscreenElement ? "🗗 Salir Pantalla Completa" : "⛶ Pantalla Completa";
+      }
+    });
+
+    // Navegación con teclado (Flechas izquierda y derecha)
+    window.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+      if (e.key === "ArrowRight") {
+        goToNextQuestion();
+      } else if (e.key === "ArrowLeft") {
+        goToPrevQuestion();
+      }
+    });
+
     // Renderizar tipografía KaTeX al cargar las preguntas
     renderAllMath();
     window.addEventListener("DOMContentLoaded", renderAllMath);
     window.addEventListener("load", renderAllMath);
+
+    // Inicializar cuadrícula del 1 al 60 y activar pregunta 1
+    buildNavGrid();
+    goToQuestion(1);
+    updateNavGrid();
 
     // Llenado de Hoja de Respuestas
     const sheetGrid = document.getElementById("sheetGrid");
@@ -2736,6 +3199,7 @@
       });
       const selectedBubble = document.getElementById(`bubble-${qId}-${letter}`);
       if (selectedBubble) selectedBubble.classList.add("selected");
+      updateNavGrid();
     }
 
     function selectFromSheet(qId, letter) {
@@ -3188,9 +3652,9 @@
 
     function scrollToQuestion(qId) {
       closeIncompleteModal();
+      goToQuestion(qId);
       const card = document.getElementById(`card-${qId}`);
       if (card) {
-        card.scrollIntoView({ behavior: "smooth", block: "center" });
         card.classList.remove("highlight-pending");
         void card.offsetWidth; // reiniciar animación
         card.classList.add("highlight-pending");
