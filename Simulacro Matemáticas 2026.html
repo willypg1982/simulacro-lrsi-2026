@@ -994,6 +994,10 @@
             <input type="date" id="studentDateInput" class="screen-input" oninput="syncStudentData()">
             <span id="printStudentDate" class="print-text">___ / ___ / 2026</span>
           </div>
+          <div class="cover-field" id="coverDurationField" style="display: none;">
+            <label><strong>Tiempo Empleado:</strong></label>
+            <span id="printStudentDuration" class="print-text" style="color: #1e3a8a; font-weight: 700;">--</span>
+          </div>
           <div class="cover-field">
             <label><strong>Convocatoria:</strong></label>
             <span class="cover-badge-conv">Ordinaria 2026</span>
@@ -1225,6 +1229,15 @@
         </div>
       </div>
 
+      <!-- Tiempo Empleado (visible solo tras comprobar) -->
+      <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; color: #1e293b;">
+        <span>⏱️ <strong>Tiempo empleado:</strong></span>
+        <span id="modalDurationVal" style="font-weight: 700; color: #1e3a8a;">--</span>
+      </div>
+
+      <!-- Estado de Envío a Google Sheets -->
+      <div id="sheetsSyncStatus" style="font-size: 0.82rem; margin-bottom: 0.8rem; display: none; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.45rem 0.8rem; border-radius: 6px; font-weight: 600;"></div>
+
       <p id="modalFeedbackMessage" style="font-size: 0.88rem; color: #334155; line-height: 1.5; margin-bottom: 1.4rem; padding: 0.6rem 0.8rem; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;"></p>
 
       <!-- Botones de Acción -->
@@ -1245,6 +1258,46 @@
   </div>
 
   <script>
+    // =========================================================================
+    // CONFIGURACIÓN DE GOOGLE SHEETS (HOJA DE CÁLCULO)
+    // =========================================================================
+    // Reemplaza esta URL con la que obtengas al implementar tu Google Apps Script como Web App:
+    const GOOGLE_SHEETS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_TU_URL_AQUI/exec";
+
+    // Seguimiento silencioso del tiempo de examen (sin cronómetro visible para el estudiante)
+    if (!sessionStorage.getItem("lrsi_exam_start_time")) {
+      sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
+    }
+
+    function getExamDuration() {
+      let start = parseInt(sessionStorage.getItem("lrsi_exam_start_time"));
+      if (!start || isNaN(start)) {
+        start = Date.now();
+        sessionStorage.setItem("lrsi_exam_start_time", start.toString());
+      }
+      const elapsed = Math.max(0, Date.now() - start);
+      return {
+        ms: elapsed,
+        formatted: formatDuration(elapsed),
+        seconds: Math.floor(elapsed / 1000)
+      };
+    }
+
+    function formatDuration(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      if (hours > 0) {
+        return `${hours} h ${minutes} min ${seconds} s`;
+      } else if (minutes > 0) {
+        return `${minutes} min ${seconds} s`;
+      } else {
+        return `${seconds} s`;
+      }
+    }
+
     // Gráficos SVG idénticos a los del examen original
     const svgs = {
       q1_A: `<svg width="180" height="150" viewBox="0 0 180 150">
@@ -2492,6 +2545,12 @@
       document.getElementById("modalCorrectVal").innerText = score;
       document.getElementById("modalWrongVal").innerText = total - score;
 
+      // Mostrar tiempo empleado
+      const durEl = document.getElementById("modalDurationVal");
+      if (durEl && window.lastExamDuration) {
+        durEl.innerText = window.lastExamDuration.formatted;
+      }
+
       const statusBadge = document.getElementById("modalStatusBadge");
       if (isApproved) {
         statusBadge.className = "status-badge status-approved";
@@ -2524,6 +2583,51 @@
       if (firstCard) {
         firstCard.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+    }
+
+    // Envío silencioso de resultados a Google Sheets
+    function sendResultsToGoogleSheets(payload) {
+      const statusEl = document.getElementById("sheetsSyncStatus");
+      if (!GOOGLE_SHEETS_SCRIPT_URL || GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        if (statusEl) {
+          statusEl.style.display = "flex";
+          statusEl.style.background = "#eff6ff";
+          statusEl.style.color = "#1e3a8a";
+          statusEl.innerHTML = "ℹ️ <em>(Para guardar en Google Sheets: pega la URL de tu Apps Script en index.html)</em>";
+        }
+        return;
+      }
+
+      if (statusEl) {
+        statusEl.style.display = "flex";
+        statusEl.style.background = "#fef3c7";
+        statusEl.style.color = "#92400e";
+        statusEl.innerHTML = "⏳ Guardando resultado en la hoja de cálculo del docente...";
+      }
+
+      fetch(GOOGLE_SHEETS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        if (statusEl) {
+          statusEl.style.background = "#dcfce7";
+          statusEl.style.color = "#166534";
+          statusEl.innerHTML = "✔ ¡Resultado registrado en la hoja de cálculo del docente!";
+        }
+      })
+      .catch((err) => {
+        console.error("Error al registrar en Google Sheets:", err);
+        if (statusEl) {
+          statusEl.style.background = "#fee2e2";
+          statusEl.style.color = "#991b1b";
+          statusEl.innerHTML = "⚠️ No se pudo conectar con la hoja de cálculo en este momento.";
+        }
+      });
     }
 
     // Descarga del Examen Resuelto en PDF con Respuestas
@@ -2575,6 +2679,7 @@
 
       // 2. Si todas están contestadas, calificar la prueba
       let score = 0;
+      const wrongQuestions = [];
 
       questionsData.forEach((q) => {
         const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
@@ -2627,6 +2732,7 @@
           feedback.className = "feedback correct-feedback";
           feedback.innerHTML = `<strong>✔ ¡Correcto! Tu respuesta: ${q.answer}</strong><div style="margin-top: 4px;">${q.exp}</div>`;
         } else {
+          wrongQuestions.push(q.id);
           feedback.className = "feedback wrong-feedback";
           feedback.innerHTML = `<strong>✕ Incorrecto. Tu respuesta: ${selectedVal} | Respuesta correcta: ${q.answer}</strong><div style="margin-top: 4px;">${q.exp}</div>`;
         }
@@ -2636,6 +2742,16 @@
       const percentage = ((score / questionsData.length) * 100).toFixed(1);
       const percentageNum = parseFloat(percentage);
       const grade = Math.round(percentageNum);
+
+      // Tiempo empleado (se calcula y revela SOLO al pulsar comprobar)
+      const duration = getExamDuration();
+      window.lastExamDuration = duration;
+
+      // Actualizar campo de tiempo en la portada para PDF y revisión
+      const coverDurationField = document.getElementById("coverDurationField");
+      const printStudentDuration = document.getElementById("printStudentDuration");
+      if (coverDurationField) coverDurationField.style.display = "flex";
+      if (printStudentDuration) printStudentDuration.innerText = duration.formatted;
 
       // 4. Actualizar tarjeta flotante superior
       const scoreBox = document.getElementById("scoreBox");
@@ -2671,7 +2787,29 @@
       // 7. Guardar último resultado
       window.lastExamResult = { score, total: questionsData.length, percentage, grade };
 
-      // 8. Abrir ventana emergente con la nota
+      // 8. Enviar resultados a Google Sheets en segundo plano
+      const studentName = document.getElementById("studentNameInput").value.trim() || "Estudiante";
+      const studentSection = document.getElementById("studentSectionInput").value.trim() || "No indicada";
+
+      const payload = {
+        fecha: new Date().toLocaleString("es-CR"),
+        estudiante: studentName,
+        seccion: studentSection,
+        puntos: score,
+        totalPuntos: questionsData.length,
+        porcentaje: percentage,
+        nota: grade,
+        condicion: percentageNum >= 70 ? "APROBADO" : "APLAZADO",
+        tiempo: duration.formatted,
+        tiempoSegundos: duration.seconds,
+        correctas: score,
+        incorrectas: questionsData.length - score,
+        preguntasIncorrectas: wrongQuestions.length > 0 ? wrongQuestions.join(", ") : "Ninguna"
+      };
+
+      sendResultsToGoogleSheets(payload);
+
+      // 9. Abrir ventana emergente con la nota y el tiempo empleado
       openScoreModal(score, questionsData.length, percentage, grade);
     }
   </script>
