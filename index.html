@@ -211,8 +211,29 @@
       background: #f1f5f9;
     }
 
-    /* Navegación Pregunta por Pregunta */
+    /* Modos de pantalla: Portada inicial vs Examen */
     @media screen {
+      body.view-cover-mode #examCoverPage {
+        display: block !important;
+      }
+      body.view-cover-mode .exam-student-badge-bar,
+      body.view-cover-mode #examNavPanel,
+      body.view-cover-mode .print-page-table {
+        display: none !important;
+      }
+
+      body.view-exam-mode #examCoverPage {
+        display: none !important;
+      }
+      body.view-exam-mode .exam-student-badge-bar {
+        display: flex !important;
+      }
+      body.view-exam-mode #examNavPanel,
+      body.view-exam-mode .print-page-table {
+        display: block !important;
+      }
+
+      /* Navegación Pregunta por Pregunta */
       .question-card {
         display: none;
       }
@@ -224,6 +245,90 @@
     @keyframes fadeInQuestion {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Acciones e inicio en la portada */
+    .cover-start-exam-action {
+      text-align: center;
+      margin: 1.5rem 0 1.2rem 0;
+      padding: 1.2rem;
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 8px;
+    }
+    .btn-start-exam {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 0.85rem 2.2rem;
+      font-size: 1.1rem;
+      font-weight: 800;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-start-exam:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px -2px rgba(0,0,0,0.2);
+    }
+    .cover-error-box {
+      background: #fee2e2;
+      border: 1.5px solid #dc2626;
+      color: #991b1b;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: inline-block;
+      max-width: 520px;
+      text-align: left;
+    }
+
+    /* Barra de identificación del estudiante en modo examen */
+    .exam-student-badge-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 0.75rem 1.1rem;
+      border-radius: 8px;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .badge-student-info {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      color: #1e293b;
+      font-size: 0.92rem;
+    }
+    .btn-return-cover {
+      background: #f8fafc;
+      color: var(--primary);
+      border: 1px solid #cbd5e1;
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .btn-return-cover:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
     }
 
     /* Panel de Navegación del 1 al 60 */
@@ -999,7 +1104,7 @@
         size: letter portrait;
         margin: 8mm 12mm 10mm 12mm;
       }
-      header, .btn-group, .feedback, .modal, .exam-nav-panel, .question-nav-controls, .btn-fullscreen, .no-print { display: none !important; }
+      header, .btn-group, .feedback, .modal, .exam-nav-panel, .exam-student-badge-bar, .question-nav-controls, .btn-fullscreen, .no-print { display: none !important; }
       .question-card { display: block !important; }
       body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
@@ -1323,7 +1428,7 @@
     }
   </style>
 </head>
-<body>
+<body class="view-cover-mode">
 
   <header>
     <div class="header-content">
@@ -1366,18 +1471,18 @@
       <div class="cover-student-box">
         <div class="cover-field full-width">
           <label><strong>Estudiante:</strong></label>
-          <input type="text" id="studentNameInput" class="screen-input" placeholder="Nombre completo de la persona estudiante..." oninput="syncStudentData()">
+          <input type="text" id="studentNameInput" class="screen-input" placeholder="Nombre completo de la persona estudiante..." oninput="syncStudentData(); clearCoverErrors(this);">
           <span id="printStudentName" class="print-text">____________________________________________________________________</span>
         </div>
         <div class="cover-row-fields">
           <div class="cover-field">
             <label><strong>Sección:</strong></label>
-            <input type="text" id="studentSectionInput" class="screen-input" placeholder="Ej: 11-1" oninput="syncStudentData()">
+            <input type="text" id="studentSectionInput" class="screen-input" placeholder="Ej: 11-1" oninput="syncStudentData(); clearCoverErrors(this);">
             <span id="printStudentSection" class="print-text">____________</span>
           </div>
           <div class="cover-field">
             <label><strong>Fecha:</strong></label>
-            <input type="date" id="studentDateInput" class="screen-input" oninput="syncStudentData()">
+            <input type="date" id="studentDateInput" class="screen-input" oninput="syncStudentData(); clearCoverErrors(this);">
             <span id="printStudentDate" class="print-text">___ / ___ / 2026</span>
           </div>
           <div class="cover-field" id="coverDurationField" style="display: none;">
@@ -1391,10 +1496,17 @@
         </div>
       </div>
 
-      <div style="text-align: center; margin-top: 1rem; margin-bottom: 0.5rem;" class="no-print">
-        <button type="button" onclick="goToQuestion(1)" style="background: #1e3a8a; color: white; padding: 0.65rem 1.6rem; font-size: 0.95rem; border-radius: 8px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: none;">
-          ▶ Comenzar Examen (Pregunta 1)
-        </button>
+      <!-- Botón de Inicio con Validación Estricta -->
+      <div class="cover-start-exam-action no-print">
+        <div id="coverFormError" class="cover-error-box" style="display: none;"></div>
+        <div>
+          <button type="button" class="btn-start-exam" onclick="startExamFromCover()">
+            ▶ Comenzar Examen (Ir a las preguntas)
+          </button>
+        </div>
+        <p style="font-size: 0.84rem; color: #64748b; margin-top: 0.6rem; margin-bottom: 0;">
+          * Es obligatorio completar su <strong>Nombre completo</strong>, <strong>Sección</strong> y <strong>Fecha</strong> para iniciar.
+        </p>
       </div>
 
       <!-- Tabla de Especificaciones y Calificación -->
@@ -1450,13 +1562,25 @@
       </div>
     </section>
 
+    <!-- ==================== BARRA RESUMEN DE ESTUDIANTE EN MODO EXAMEN ==================== -->
+    <div class="exam-student-badge-bar no-print" id="examStudentBadgeBar">
+      <div class="badge-student-info">
+        <span>👤 <strong>Estudiante:</strong> <span id="badgeStudentName">--</span></span>
+        <span>🏫 <strong>Sección:</strong> <span id="badgeStudentSection">--</span></span>
+        <span>📅 <strong>Fecha:</strong> <span id="badgeStudentDate">--</span></span>
+      </div>
+      <button type="button" class="btn-return-cover" onclick="returnToCover()" title="Ver datos o instrucciones generales">
+        📋 Ver Portada e Instrucciones
+      </button>
+    </div>
+
     <!-- ==================== PANEL DE NAVEGACIÓN 1 A 60 ==================== -->
     <section class="exam-nav-panel" id="examNavPanel">
       <div class="nav-panel-header">
         <div class="nav-panel-left">
           <span class="nav-badge-current">Pregunta <strong id="navCurrentIndicator">1</strong> de 60</span>
           <span class="nav-badge-progress" id="navProgressBadge">0 / 60 Contestadas</span>
-          <button type="button" class="btn-cover-shortcut no-print" onclick="scrollToCover()" title="Ver datos del estudiante e instrucciones">
+          <button type="button" class="btn-cover-shortcut no-print" onclick="returnToCover()" title="Ver datos del estudiante e instrucciones">
             📋 Portada / Datos
           </button>
         </div>
@@ -1860,10 +1984,7 @@
     // URL de la Aplicación Web de Google Apps Script:
     const GOOGLE_SHEETS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvqMOXh50piAP-1KxXM3GrRflBc9DZXjnwzSJz46b1oen6f2EoKnufozsXV4h2hpAEIg/exec";
 
-    // Seguimiento silencioso del tiempo de examen (sin cronómetro visible para el estudiante)
-    if (!sessionStorage.getItem("lrsi_exam_start_time")) {
-      sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
-    }
+    // Seguimiento silencioso del tiempo de examen (se inicializa al pulsar Comenzar Examen)
 
     function getExamDuration() {
       let start = parseInt(sessionStorage.getItem("lrsi_exam_start_time"));
@@ -3580,16 +3701,24 @@
       document.getElementById("printStudentName").innerText = name || "____________________________________________________________________";
       document.getElementById("printStudentSection").innerText = sec || "____________";
 
+      let formattedDate = "___ / ___ / 2026";
       if (dateVal) {
         const parts = dateVal.split("-");
         if (parts.length === 3) {
-          document.getElementById("printStudentDate").innerText = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
         } else {
-          document.getElementById("printStudentDate").innerText = dateVal;
+          formattedDate = dateVal;
         }
-      } else {
-        document.getElementById("printStudentDate").innerText = "___ / ___ / 2026";
       }
+      document.getElementById("printStudentDate").innerText = formattedDate;
+
+      // Sincronizar badges de la barra superior en modo examen
+      const badgeName = document.getElementById("badgeStudentName");
+      const badgeSec = document.getElementById("badgeStudentSection");
+      const badgeDate = document.getElementById("badgeStudentDate");
+      if (badgeName) badgeName.innerText = name || "--";
+      if (badgeSec) badgeSec.innerText = sec || "--";
+      if (badgeDate) badgeDate.innerText = (formattedDate !== "___ / ___ / 2026") ? formattedDate : "--";
 
       // Sincronizar input del modal de resultados
       const modalNameInput = document.getElementById("modalStudentNameInput");
@@ -3604,6 +3733,69 @@
         nameInput.value = val;
         syncStudentData();
       }
+    }
+
+    // Funciones de control de la Portada Inicial y Transición al Examen
+    function clearCoverErrors(el) {
+      if (el) el.style.borderColor = "#cbd5e1";
+      const errBox = document.getElementById("coverFormError");
+      if (errBox) errBox.style.display = "none";
+    }
+
+    function startExamFromCover() {
+      const nameInput = document.getElementById("studentNameInput");
+      const secInput = document.getElementById("studentSectionInput");
+      const dateInput = document.getElementById("studentDateInput");
+      const errBox = document.getElementById("coverFormError");
+
+      const nameVal = nameInput ? nameInput.value.trim() : "";
+      const secVal = secInput ? secInput.value.trim() : "";
+      const dateVal = dateInput ? dateInput.value.trim() : "";
+
+      let missing = [];
+      if (!nameVal) {
+        missing.push("Nombre completo");
+        if (nameInput) nameInput.style.borderColor = "#dc2626";
+      }
+      if (!secVal) {
+        missing.push("Sección");
+        if (secInput) secInput.style.borderColor = "#dc2626";
+      }
+      if (!dateVal) {
+        missing.push("Fecha");
+        if (dateInput) dateInput.style.borderColor = "#dc2626";
+      }
+
+      if (missing.length > 0) {
+        if (errBox) {
+          errBox.innerHTML = `⚠️ <strong>Datos obligatorios requeridos:</strong><br>Para comenzar el examen debe completar: <strong>${missing.join(", ")}</strong>.`;
+          errBox.style.display = "inline-block";
+        }
+        if (!nameVal && nameInput) nameInput.focus();
+        else if (!secVal && secInput) secInput.focus();
+        else if (!dateVal && dateInput) dateInput.focus();
+        return;
+      }
+
+      // Iniciar el temporizador del examen si aún no se ha iniciado
+      if (!sessionStorage.getItem("lrsi_exam_start_time")) {
+        sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
+      }
+
+      // Sincronizar datos y cambiar a modo examen
+      syncStudentData();
+      document.body.classList.remove("view-cover-mode");
+      document.body.classList.add("view-exam-mode");
+
+      // Cargar la pregunta activa
+      goToQuestion(currentQuestionIndex || 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function returnToCover() {
+      document.body.classList.remove("view-exam-mode");
+      document.body.classList.add("view-cover-mode");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     // Funciones del Modal Examen Incompleto
@@ -3652,6 +3844,8 @@
 
     function scrollToQuestion(qId) {
       closeIncompleteModal();
+      document.body.classList.remove("view-cover-mode");
+      document.body.classList.add("view-exam-mode");
       goToQuestion(qId);
       const card = document.getElementById(`card-${qId}`);
       if (card) {
@@ -3735,10 +3929,9 @@
 
     function reviewOnScreen() {
       closeScoreModal();
-      const firstCard = document.getElementById("card-1");
-      if (firstCard) {
-        firstCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      document.body.classList.remove("view-cover-mode");
+      document.body.classList.add("view-exam-mode");
+      goToQuestion(1);
     }
 
     // Envío silencioso de resultados a Google Sheets
