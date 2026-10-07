@@ -3473,10 +3473,6 @@
     // REPORTE DEL PROFESOR (ACCESO CON CLAVE 1331 Y TABLA EN TIEMPO REAL)
     // =========================================================================
     function openTeacherAuthModal() {
-      if (sessionStorage.getItem("lrsi_teacher_authed") === "true") {
-        openTeacherReportModal();
-        return;
-      }
       const modal = document.getElementById("teacherAuthModal");
       const input = document.getElementById("teacherPinInput");
       const err = document.getElementById("teacherPinError");
@@ -3503,7 +3499,6 @@
       const val = input ? input.value.trim() : "";
 
       if (val === "1331") {
-        sessionStorage.setItem("lrsi_teacher_authed", "true");
         closeTeacherAuthModal();
         openTeacherReportModal();
       } else {
@@ -3548,53 +3543,73 @@
 
     async function loadTeacherReportData() {
       const statusEl = document.getElementById("teacherReportStatus");
-      const tbody = document.getElementById("teacherReportTableBody");
       const notice = document.getElementById("teacherScriptNotice");
-      if (statusEl) {
-        statusEl.innerHTML = "⏳ Consultando datos en vivo...";
-        statusEl.style.color = "#0369a1";
-        statusEl.style.background = "#e0f2fe";
-      }
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding: 2rem; color: #64748b; font-style: italic;">⏳ Cargando registros en tiempo real...</td></tr>`;
-      }
 
-      let fetchedRows = [];
-      let liveSuccess = false;
-
-      // Intentar leer de Google Sheets vía GET
-      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
-        try {
-          const resp = await fetch(GOOGLE_SHEETS_SCRIPT_URL);
-          if (resp.ok) {
-            const result = await resp.json();
-            if (result && Array.isArray(result.data)) {
-              fetchedRows = result.data;
-              liveSuccess = true;
-            }
-          }
-        } catch (err) {
-          console.warn("Consulta GET a Google Sheets no disponible o requiere doGet:", err);
-        }
-      }
-
-      // Obtener también registros guardados localmente
+      // 1. Obtener y renderizar de inmediato (en 0 ms) los registros guardados en el navegador
       let localRecords = [];
       try {
         localRecords = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
       } catch (e) {}
 
-      if (liveSuccess) {
+      // Mostrar los datos locales inmediatamente para que la tabla nunca se quede colgada
+      parseAndRenderTeacherRecords([], localRecords);
+
+      if (statusEl) {
+        if (localRecords.length > 0) {
+          statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) guardados`;
+          statusEl.style.color = "#b45309";
+          statusEl.style.background = "#fef3c7";
+        } else {
+          statusEl.innerHTML = "⏳ Consultando datos...";
+          statusEl.style.color = "#0369a1";
+          statusEl.style.background = "#e0f2fe";
+        }
+      }
+
+      // 2. Intentar consultar Google Sheets con tiempo límite de 4 segundos
+      let fetchedRows = [];
+      let liveSuccess = false;
+
+      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        try {
+          const controller = new AbortController();
+          const timerId = setTimeout(() => controller.abort(), 4000);
+
+          const resp = await fetch(GOOGLE_SHEETS_SCRIPT_URL, {
+            method: "GET",
+            redirect: "follow",
+            signal: controller.signal
+          });
+          clearTimeout(timerId);
+
+          if (resp.ok) {
+            const rawText = await resp.text();
+            try {
+              const result = JSON.parse(rawText);
+              if (result && Array.isArray(result.data) && result.data.length > 0) {
+                fetchedRows = result.data;
+                liveSuccess = true;
+              }
+            } catch (jsonErr) {}
+          }
+        } catch (err) {
+          console.warn("Consulta a Google Sheets:", err);
+        }
+      }
+
+      // 3. Si se obtuvieron datos en vivo de Google Sheets, actualizar la tabla
+      if (liveSuccess && fetchedRows.length > 0) {
         if (statusEl) {
           statusEl.innerHTML = "✔ Conectado a Google Sheets en tiempo real";
           statusEl.style.color = "#15803d";
           statusEl.style.background = "#dcfce7";
         }
         if (notice) notice.style.display = "none";
+        parseAndRenderTeacherRecords(fetchedRows, localRecords);
       } else {
         if (statusEl) {
           if (localRecords.length > 0) {
-            statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) recientes del navegador`;
+            statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) guardados`;
             statusEl.style.color = "#b45309";
             statusEl.style.background = "#fef3c7";
           } else {
@@ -3607,8 +3622,6 @@
           notice.style.display = "block";
         }
       }
-
-      parseAndRenderTeacherRecords(fetchedRows, localRecords);
     }
 
     function parseStudentAnswers(raw) {
@@ -3677,12 +3690,14 @@
           const row = fetchedRows[i];
           if (!row || row.length === 0 || !row[eIdx]) continue;
           const rawResp = (rIdx !== -1 && row[rIdx]) ? row[rIdx] : (row[13] || null);
+          const rawPct = row[pctIdx] !== undefined ? String(row[pctIdx]).trim() : "--";
+          const pctVal = rawPct.includes("%") ? rawPct : (rawPct !== "--" ? `${rawPct}%` : "--");
           records.push({
             fecha: row[fIdx] || "--",
             estudiante: row[eIdx] || "--",
             seccion: row[sIdx] || "--",
-            porcentaje: row[pctIdx] !== undefined ? `${row[pctIdx]}%` : "--",
-            porcentajeNum: parseFloat(row[pctIdx]) || 0,
+            porcentaje: pctVal,
+            porcentajeNum: parseFloat(rawPct) || 0,
             buenas: row[bIdx] !== undefined ? row[bIdx] : "--",
             incorrectas: row[iIdx] !== undefined ? row[iIdx] : "--",
             tiempo: row[tIdx] || "--",
@@ -3695,12 +3710,14 @@
       if (localRecords && localRecords.length > 0) {
         if (records.length === 0) {
           localRecords.forEach(r => {
+            const rawPct = r.porcentaje !== undefined ? String(r.porcentaje).trim() : (r.nota !== undefined ? String(r.nota).trim() : "--");
+            const pctVal = rawPct.includes("%") ? rawPct : (rawPct !== "--" ? `${rawPct}%` : "--");
             records.push({
               fecha: r.fecha || "--",
               estudiante: r.estudiante || "--",
               seccion: r.seccion || "--",
-              porcentaje: r.porcentaje ? `${r.porcentaje}%` : (r.nota ? `${r.nota}%` : "--"),
-              porcentajeNum: parseFloat(r.porcentaje || r.nota) || 0,
+              porcentaje: pctVal,
+              porcentajeNum: parseFloat(rawPct) || 0,
               buenas: r.correctas !== undefined ? r.correctas : (r.puntos !== undefined ? r.puntos : "--"),
               incorrectas: r.incorrectas !== undefined ? r.incorrectas : "--",
               tiempo: r.tiempo || "--",
