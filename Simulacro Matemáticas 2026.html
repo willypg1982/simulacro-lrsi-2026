@@ -3578,25 +3578,36 @@
         localRecords = [];
       }
 
-      // Si no es forzado y no tenemos nada en pantalla todavía, mostrar datos locales de inmediato (0 ms)
-      if (!forceLive && localRecords.length > 0 && teacherNormalizedRecords.length === 0) {
+      // Si se fuerza la sincronización, mostrar mensaje de espera claro en la tabla
+      if (forceLive) {
+        const tbody = document.getElementById("teacherReportTableBody");
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" style="padding: 2.5rem 1rem; color: #0284c7; font-weight: 600; text-align: center;">
+                ⏳ Conectando en tiempo real con Google Sheets... Por favor espera unos segundos.
+              </td>
+            </tr>
+          `;
+        }
+      } else if (localRecords.length > 0 && teacherNormalizedRecords.length === 0) {
         parseAndRenderTeacherRecords([], localRecords, false);
       }
 
       if (statusEl) {
-        statusEl.innerHTML = "⏳ Consultando Google Sheets en tiempo real...";
+        statusEl.innerHTML = "⏳ Conectando con Google Sheets en tiempo real...";
         statusEl.style.color = "#0369a1";
         statusEl.style.background = "#e0f2fe";
       }
 
-      // 2. Consultar Google Sheets en vivo con parámetro anti-caché y tiempo límite de 12 segundos
+      // 2. Consultar Google Sheets en vivo con parámetro anti-caché y tiempo límite de 35 segundos
       let fetchedRows = [];
       let liveSuccess = false;
 
       if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         try {
           const controller = new AbortController();
-          const timerId = setTimeout(() => controller.abort(), 12000);
+          const timerId = setTimeout(() => controller.abort(), 35000);
 
           const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
           const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
@@ -3629,6 +3640,11 @@
         if (notice) notice.style.display = "none";
 
         parseAndRenderTeacherRecords(fetchedRows, localRecords, true);
+
+        // Sincronizar memoria local con los registros reales de Google Sheets
+        try {
+          localStorage.setItem("lrsi_saved_results", JSON.stringify(teacherNormalizedRecords));
+        } catch(e) {}
 
         if (statusEl) {
           const rowCount = Math.max(0, fetchedRows.length > 1 ? fetchedRows.length - 1 : 0);
