@@ -1,19 +1,19 @@
 /**
  * ============================================================================
  * SIMULACRO DE MATEMÁTICAS 2026 - LICEO RURAL SAN ISIDRO
- * Google Apps Script para registro de notas, tiempo y respuestas por estudiante
+ * Google Apps Script para registro, consulta y eliminación de resultados
  * Docente: Profesor William Pineda González
  * ============================================================================
  * 
- * INSTRUCCIONES DE USO:
+ * INSTRUCCIONES DE ACTUALIZACIÓN:
  * 1. En tu Hoja de Cálculo de Google, ve a: Extensiones > Apps Script.
- * 2. Borra todo el código que haya allí y pega este archivo completo.
- * 3. Haz clic en "Implementar" (botón azul) > "Nueva implementación".
+ * 2. Borra TODO el código anterior y pega este archivo completo.
+ * 3. Haz clic en "Implementar" (botón azul arriba a la derecha) > "Nueva implementación".
  * 4. Tipo: "Aplicación web".
  * 5. Ejecutar como: "Yo (tu cuenta de correo)".
  * 6. Quién tiene acceso: "Cualquier persona" (Anyone).
  * 7. Haz clic en "Implementar" y autoriza los permisos.
- * 8. Copia la URL de la aplicación web generada (termina en /exec) y asegúrate de que sea la misma en index.html.
+ * 8. Si la URL generada cambia, verifícala en index.html.
  */
 
 function doGet(e) {
@@ -27,8 +27,51 @@ function doGet(e) {
     }
 
     const sheet = ss.getActiveSheet();
+    const action = e && e.parameter ? e.parameter.action : null;
+
+    // ACCIÓN: ELIMINAR UN REGISTRO VÍA GET
+    if (action === "delete") {
+      const targetStudent = (e.parameter.estudiante || "").trim().toLowerCase();
+      const targetDate = (e.parameter.fecha || "").trim();
+      const values = sheet.getDataRange().getDisplayValues();
+      let deleted = 0;
+
+      for (let r = values.length - 1; r >= 1; r--) {
+        const row = values[r];
+        const studentName = String(row[1] || "").trim().toLowerCase();
+        let match = (studentName === targetStudent);
+        if (match && targetDate && targetDate !== "--") {
+          const rowDate = String(row[0] || "").trim();
+          match = (rowDate === targetDate);
+        }
+        if (match) {
+          sheet.deleteRow(r + 1);
+          deleted++;
+          break; // Eliminar la fila encontrada
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "success", 
+        action: "delete", 
+        deletedCount: deleted 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACCIÓN: VACIAR TODOS LOS REGISTROS VÍA GET (conservando encabezados)
+    if (action === "clearAll") {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.deleteRows(2, lastRow - 1);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "success", 
+        action: "clearAll" 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // CONSULTA ESTÁNDAR: OBTENER TODAS LAS FILAS EN VIVO
     const data = sheet.getDataRange().getDisplayValues();
-    
     return ContentService.createTextOutput(JSON.stringify({ 
       status: "success", 
       data: data 
@@ -71,7 +114,49 @@ function doPost(e) {
     }
     
     const data = JSON.parse(e.postData.contents);
+
+    // ACCIÓN: ELIMINAR VÍA POST
+    if (data.action === "delete") {
+      const targetStudent = String(data.estudiante || "").trim().toLowerCase();
+      const targetDate = String(data.fecha || "").trim();
+      const values = sheet.getDataRange().getDisplayValues();
+      let deleted = 0;
+
+      for (let r = values.length - 1; r >= 1; r--) {
+        const row = values[r];
+        const studentName = String(row[1] || "").trim().toLowerCase();
+        let match = (studentName === targetStudent);
+        if (match && targetDate && targetDate !== "--") {
+          const rowDate = String(row[0] || "").trim();
+          match = (rowDate === targetDate);
+        }
+        if (match) {
+          sheet.deleteRow(r + 1);
+          deleted++;
+          break;
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "success", 
+        action: "delete", 
+        deletedCount: deleted 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ACCIÓN: VACIAR HOJA VÍA POST
+    if (data.action === "clearAll") {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.deleteRows(2, lastRow - 1);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "success", 
+        action: "clearAll" 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
+    // GUARDAR NUEVO RESULTADO (ACCIÓN POR DEFECTO)
     sheet.appendRow([
       data.fecha || new Date().toLocaleString("es-CR"),
       data.estudiante || "Estudiante",
@@ -89,7 +174,7 @@ function doPost(e) {
       data.respuestasStr || JSON.stringify(data.respuestas || {})
     ]);
     
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", action: "save" }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {

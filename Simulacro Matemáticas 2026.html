@@ -3907,28 +3907,72 @@
       tbody.innerHTML = html;
     }
 
-    function clearTeacherLocalStorage() {
+    async function clearTeacherLocalStorage() {
       if (confirm("¿Deseas vaciar los registros de prueba guardados en la memoria de este navegador?\n\n✔ Tu Hoja de Google Sheets NO se verá afectada.\n✔ Se eliminarán las pruebas viejas guardadas localmente en esta computadora.")) {
         localStorage.removeItem("lrsi_saved_results");
-        loadTeacherReportData(true);
+        teacherNormalizedRecords = [];
+        await loadTeacherReportData(true);
       }
     }
 
-    function deleteTeacherRow(idx) {
+    async function deleteTeacherRow(idx) {
       const rec = currentFilteredTeacherRecords[idx];
       if (!rec) return;
 
-      if (confirm(`¿Deseas quitar a "${rec.estudiante}" de esta vista?`)) {
-        // Remover de localStorage si existía guardado localmente
-        try {
-          let saved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
-          saved = saved.filter(r => !(r.estudiante === rec.estudiante && r.fecha === rec.fecha));
-          localStorage.setItem("lrsi_saved_results", JSON.stringify(saved));
-        } catch (e) {}
+      if (!confirm(`¿Deseas eliminar definitivamente el reporte de "${rec.estudiante}"?\n\n✔ Se eliminará de esta lista.\n✔ Se eliminará de la Hoja de Google Sheets en la nube.`)) {
+        return;
+      }
 
-        // Remover de la lista activa en pantalla
-        teacherNormalizedRecords = teacherNormalizedRecords.filter(r => r !== rec);
-        filterTeacherReport();
+      const statusEl = document.getElementById("teacherReportStatus");
+      if (statusEl) {
+        statusEl.innerHTML = `⏳ Eliminando a ${rec.estudiante} de Google Sheets...`;
+        statusEl.style.color = "#dc2626";
+        statusEl.style.background = "#fee2e2";
+      }
+
+      // 1. Remover de localStorage inmediatamente
+      try {
+        let saved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+        saved = saved.filter(r => {
+          const sameName = String(r.estudiante || "").toLowerCase().trim() === String(rec.estudiante || "").toLowerCase().trim();
+          const sameDate = (!r.fecha || !rec.fecha || r.fecha === rec.fecha || r.fecha === "--");
+          return !(sameName && sameDate);
+        });
+        localStorage.setItem("lrsi_saved_results", JSON.stringify(saved));
+      } catch (e) {}
+
+      // 2. Remover de la lista activa en pantalla
+      teacherNormalizedRecords = teacherNormalizedRecords.filter(r => r !== rec);
+      filterTeacherReport();
+
+      // 3. Enviar orden de eliminación a Google Sheets en la nube (vía GET y POST de respaldo)
+      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        try {
+          const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
+          const deleteUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=delete&estudiante=${encodeURIComponent(rec.estudiante)}&fecha=${encodeURIComponent(rec.fecha || "")}&t=${Date.now()}`;
+          
+          await fetch(deleteUrl, { method: "GET", redirect: "follow" });
+          
+          if (statusEl) {
+            statusEl.innerHTML = `✔ ${rec.estudiante} eliminado de Google Sheets`;
+            statusEl.style.color = "#15803d";
+            statusEl.style.background = "#dcfce7";
+          }
+        } catch (err) {
+          console.warn("Fallo en GET delete, intentando POST:", err);
+          try {
+            fetch(GOOGLE_SHEETS_SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "delete",
+                estudiante: rec.estudiante,
+                fecha: rec.fecha
+              })
+            });
+          } catch(e) {}
+        }
       }
     }
 
