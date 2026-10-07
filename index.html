@@ -2060,13 +2060,17 @@
     // URL de la Aplicación Web de Google Apps Script:
     const GOOGLE_SHEETS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvqMOXh50piAP-1KxXM3GrRflBc9DZXjnwzSJz46b1oen6f2EoKnufozsXV4h2hpAEIg/exec";
 
-    // Seguimiento silencioso del tiempo de examen (se inicializa al pulsar Comenzar Examen)
+    // Seguimiento silencioso del tiempo de examen (se inicia al pulsar Comenzar Examen)
+    // Limpiar cualquier marca de tiempo residual de sesiones anteriores
+    if (document.body && document.body.classList.contains("view-cover-mode")) {
+      sessionStorage.removeItem("lrsi_exam_start_time");
+      sessionStorage.removeItem("lrsi_exam_active");
+    }
 
     function getExamDuration() {
       let start = parseInt(sessionStorage.getItem("lrsi_exam_start_time"));
       if (!start || isNaN(start)) {
         start = Date.now();
-        sessionStorage.setItem("lrsi_exam_start_time", start.toString());
       }
       const elapsed = Math.max(0, Date.now() - start);
       return {
@@ -4127,9 +4131,10 @@
         return;
       }
 
-      // Iniciar el temporizador del examen si aún no se ha iniciado
-      if (!sessionStorage.getItem("lrsi_exam_start_time")) {
+      // Iniciar el temporizador del examen si es un nuevo intento
+      if (!sessionStorage.getItem("lrsi_exam_active") || !sessionStorage.getItem("lrsi_exam_start_time")) {
         sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
+        sessionStorage.setItem("lrsi_exam_active", "true");
       }
 
       // Sincronizar datos y cambiar a modo examen
@@ -4455,6 +4460,10 @@
       // Tiempo empleado (se calcula y revela SOLO al pulsar comprobar)
       const duration = getExamDuration();
       window.lastExamDuration = duration;
+
+      // Limpiar temporizador para que cualquier nuevo examen inicie estrictamente desde cero
+      sessionStorage.removeItem("lrsi_exam_start_time");
+      sessionStorage.removeItem("lrsi_exam_active");
 
       // Actualizar campo de tiempo en la portada para PDF y revisión
       const coverDurationField = document.getElementById("coverDurationField");
