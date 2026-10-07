@@ -210,6 +210,63 @@
     .teacher-report-table tr:hover {
       background: #f1f5f9;
     }
+    .btn-table-pdf {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+    .btn-table-pdf:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+    .btn-table-view {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 0.35rem 0.55rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-left: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+    .btn-table-view:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+    }
+    .teacher-viewing-banner {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 0.6rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      border-bottom: 3px solid #f59e0b;
+      font-size: 0.92rem;
+    }
 
     /* Modos de pantalla: Portada inicial vs Examen */
     @media screen {
@@ -1430,6 +1487,24 @@
 </head>
 <body class="view-cover-mode">
 
+  <!-- Barra de Notificación cuando el docente está revisando o imprimiendo el examen de un estudiante -->
+  <div id="teacherViewingBanner" class="teacher-viewing-banner no-print" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <span>👁️ <strong>Examen del estudiante:</strong> <span id="teacherViewingStudentName" style="color: #fde047; font-weight: 700;">--</span></span>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+      <button type="button" onclick="downloadExamPDF()" style="background: #16a34a; color: white; border: none; padding: 0.4rem 0.9rem; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
+        📥 Descargar Examen en PDF
+      </button>
+      <button type="button" onclick="returnToTeacherReport()" style="background: #f59e0b; color: #1e293b; border: none; padding: 0.4rem 0.9rem; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
+        📊 Volver al Reporte del Profesor
+      </button>
+      <button type="button" onclick="exitTeacherViewing()" style="background: #e2e8f0; color: #334155; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">
+        ✖ Salir
+      </button>
+    </div>
+  </div>
+
   <header>
     <div class="header-content">
       <div>
@@ -1813,18 +1888,19 @@
         <table class="teacher-report-table">
           <thead>
             <tr>
-              <th style="width: 15%;">Marca Temporal</th>
-              <th style="width: 25%;">Estudiante</th>
-              <th style="width: 10%;">Sección</th>
-              <th style="width: 12%;">Porcentaje / Nota</th>
-              <th style="width: 12%;">Preguntas Buenas</th>
-              <th style="width: 12%;">Preguntas Incorrectas</th>
-              <th style="width: 14%;">Tiempo de Examen</th>
+              <th style="width: 14%;">Marca Temporal</th>
+              <th style="width: 22%;">Estudiante</th>
+              <th style="width: 8%;">Sección</th>
+              <th style="width: 11%;">Porcentaje / Nota</th>
+              <th style="width: 10%;">Buenas</th>
+              <th style="width: 10%;">Incorrectas</th>
+              <th style="width: 11%;">Tiempo</th>
+              <th style="width: 14%;" class="no-print-report">Examen Estudiante</th>
             </tr>
           </thead>
           <tbody id="teacherReportTableBody">
             <tr>
-              <td colspan="7" style="padding: 2rem; color: #64748b; font-style: italic;">
+              <td colspan="8" style="padding: 2rem; color: #64748b; font-style: italic;">
                 Cargando registros...
               </td>
             </tr>
@@ -3393,6 +3469,10 @@
     // REPORTE DEL PROFESOR (ACCESO CON CLAVE 1331 Y TABLA EN TIEMPO REAL)
     // =========================================================================
     function openTeacherAuthModal() {
+      if (sessionStorage.getItem("lrsi_teacher_authed") === "true") {
+        openTeacherReportModal();
+        return;
+      }
       const modal = document.getElementById("teacherAuthModal");
       const input = document.getElementById("teacherPinInput");
       const err = document.getElementById("teacherPinError");
@@ -3419,6 +3499,7 @@
       const val = input ? input.value.trim() : "";
 
       if (val === "1331") {
+        sessionStorage.setItem("lrsi_teacher_authed", "true");
         closeTeacherAuthModal();
         openTeacherReportModal();
       } else {
@@ -3526,6 +3607,40 @@
       parseAndRenderTeacherRecords(fetchedRows, localRecords);
     }
 
+    function parseStudentAnswers(raw) {
+      if (!raw) return {};
+      if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+      if (typeof raw === "string") {
+        raw = raw.trim();
+        if (raw.startsWith("{") && raw.endsWith("}")) {
+          try {
+            return JSON.parse(raw);
+          } catch (e) {}
+        }
+        if (raw.includes(":")) {
+          const map = {};
+          raw.split(",").forEach(item => {
+            const parts = item.split(":");
+            if (parts.length === 2) {
+              const qId = parseInt(parts[0].trim());
+              const val = parts[1].trim().toUpperCase();
+              if (!isNaN(qId) && val) map[qId] = val;
+            }
+          });
+          if (Object.keys(map).length > 0) return map;
+        }
+        if (raw.includes(",")) {
+          const map = {};
+          raw.split(",").forEach((val, idx) => {
+            val = val.trim().toUpperCase();
+            if (val && val.length === 1) map[idx + 1] = val;
+          });
+          if (Object.keys(map).length > 0) return map;
+        }
+      }
+      return {};
+    }
+
     function parseAndRenderTeacherRecords(fetchedRows, localRecords) {
       const records = [];
 
@@ -3552,10 +3667,12 @@
         const bIdx = getIdx(/correcta|buena|punto/, 9);
         const iIdx = getIdx(/incorrecta|mala/, 10);
         const tIdx = getIdx(/tiempo|duraci[oó]n/, 8);
+        const rIdx = getIdx(/respuesta/, 13);
 
         for (let i = startIndex; i < fetchedRows.length; i++) {
           const row = fetchedRows[i];
           if (!row || row.length === 0 || !row[eIdx]) continue;
+          const rawResp = (rIdx !== -1 && row[rIdx]) ? row[rIdx] : (row[13] || null);
           records.push({
             fecha: row[fIdx] || "--",
             estudiante: row[eIdx] || "--",
@@ -3564,30 +3681,46 @@
             porcentajeNum: parseFloat(row[pctIdx]) || 0,
             buenas: row[bIdx] !== undefined ? row[bIdx] : "--",
             incorrectas: row[iIdx] !== undefined ? row[iIdx] : "--",
-            tiempo: row[tIdx] || "--"
+            tiempo: row[tIdx] || "--",
+            respuestas: parseStudentAnswers(rawResp)
           });
         }
       }
 
-      // Si no hay de Google Sheets, utilizar los locales
-      if (records.length === 0 && localRecords && localRecords.length > 0) {
-        localRecords.forEach(r => {
-          records.push({
-            fecha: r.fecha || "--",
-            estudiante: r.estudiante || "--",
-            seccion: r.seccion || "--",
-            porcentaje: r.porcentaje ? `${r.porcentaje}%` : (r.nota ? `${r.nota}%` : "--"),
-            porcentajeNum: parseFloat(r.porcentaje || r.nota) || 0,
-            buenas: r.correctas !== undefined ? r.correctas : (r.puntos !== undefined ? r.puntos : "--"),
-            incorrectas: r.incorrectas !== undefined ? r.incorrectas : "--",
-            tiempo: r.tiempo || "--"
+      // Integrar o enriquecer con los registros locales guardados en el navegador
+      if (localRecords && localRecords.length > 0) {
+        if (records.length === 0) {
+          localRecords.forEach(r => {
+            records.push({
+              fecha: r.fecha || "--",
+              estudiante: r.estudiante || "--",
+              seccion: r.seccion || "--",
+              porcentaje: r.porcentaje ? `${r.porcentaje}%` : (r.nota ? `${r.nota}%` : "--"),
+              porcentajeNum: parseFloat(r.porcentaje || r.nota) || 0,
+              buenas: r.correctas !== undefined ? r.correctas : (r.puntos !== undefined ? r.puntos : "--"),
+              incorrectas: r.incorrectas !== undefined ? r.incorrectas : "--",
+              tiempo: r.tiempo || "--",
+              respuestas: parseStudentAnswers(r.respuestas || r.respuestasStr || r.respuestasDetalladas)
+            });
           });
-        });
+        } else {
+          // Enlazar respuestas locales si la hoja en la nube aún no tenía la columna de respuestas
+          records.forEach(rec => {
+            if (!rec.respuestas || Object.keys(rec.respuestas).length === 0) {
+              const match = localRecords.find(lr => lr.estudiante === rec.estudiante && (lr.fecha === rec.fecha || lr.seccion === rec.seccion));
+              if (match && (match.respuestas || match.respuestasStr)) {
+                rec.respuestas = parseStudentAnswers(match.respuestas || match.respuestasStr);
+              }
+            }
+          });
+        }
       }
 
       teacherNormalizedRecords = records;
       filterTeacherReport();
     }
+
+    let currentFilteredTeacherRecords = [];
 
     function filterTeacherReport() {
       const searchInput = document.getElementById("teacherSearchInput");
@@ -3603,6 +3736,8 @@
         );
       });
 
+      currentFilteredTeacherRecords = filtered;
+
       // Actualizar indicadores (KPIs)
       document.getElementById("kpiTotalStudents").innerText = filtered.length;
       if (filtered.length > 0) {
@@ -3614,7 +3749,6 @@
         document.getElementById("kpiApproved").innerText = approved;
         document.getElementById("kpiFailed").innerText = filtered.length - approved;
 
-        // Tiempo más representativo o promedio
         const times = filtered.map(r => r.tiempo).filter(t => t && t !== "--");
         document.getElementById("kpiAvgTime").innerText = times.length > 0 ? times[0] : "--";
       } else {
@@ -3628,7 +3762,7 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
+            <td colspan="8" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
               ${term ? "No se encontraron estudiantes que coincidan con la búsqueda." : "Aún no se han registrado respuestas de estudiantes."}
             </td>
           </tr>
@@ -3655,11 +3789,227 @@
             <td style="color: #16a34a; font-weight: 700;">${r.buenas}</td>
             <td style="color: #dc2626; font-weight: 700;">${r.incorrectas}</td>
             <td style="color: #0284c7; font-weight: 600;">${r.tiempo}</td>
+            <td class="no-print-report" style="white-space: nowrap;">
+              <button type="button" class="btn-table-pdf" onclick="generateStudentExamPDF(${idx})" title="Descargar o imprimir el examen calificado de este estudiante en PDF">
+                📥 Examen PDF
+              </button>
+              <button type="button" class="btn-table-view" onclick="viewStudentExamOnScreen(${idx})" title="Ver este examen calificado en pantalla">
+                👁️ Ver
+              </button>
+            </td>
           </tr>
         `;
       });
 
       tbody.innerHTML = html;
+    }
+
+    // Carga y reconstrucción de la prueba de un estudiante para el profesor
+    function applyStudentExamData(r, answers) {
+      const nameInput = document.getElementById("studentNameInput");
+      const secInput = document.getElementById("studentSectionInput");
+      const printName = document.getElementById("printStudentName");
+      const printSec = document.getElementById("printStudentSection");
+      const printDate = document.getElementById("printStudentDate");
+      const printDuration = document.getElementById("printStudentDuration");
+      const coverDur = document.getElementById("coverDurationField");
+
+      if (nameInput) nameInput.value = r.estudiante || "";
+      if (secInput) secInput.value = r.seccion || "";
+      if (printName) printName.innerText = r.estudiante || "____________________________________________________________________";
+      if (printSec) printSec.innerText = r.seccion || "____________";
+      if (printDate) printDate.innerText = r.fecha || "___ / ___ / 2026";
+      if (printDuration) printDuration.innerText = r.tiempo || "--";
+      if (coverDur) coverDur.style.display = "flex";
+
+      const badgeName = document.getElementById("badgeStudentName");
+      const badgeSec = document.getElementById("badgeStudentSection");
+      const badgeDate = document.getElementById("badgeStudentDate");
+      if (badgeName) badgeName.innerText = r.estudiante || "--";
+      if (badgeSec) badgeSec.innerText = r.seccion || "--";
+      if (badgeDate) badgeDate.innerText = r.fecha || "--";
+
+      const pts = (r.buenas !== undefined && r.buenas !== "--") ? r.buenas : (r.puntos || 0);
+      const total = questionsData.length;
+      const pct = (r.porcentaje || "").replace("%", "") || ((pts / total) * 100).toFixed(1);
+      const pctNum = parseFloat(pct) || 0;
+      const grade = r.nota || Math.round(pctNum);
+
+      const coverScorePts = document.getElementById("coverScorePts");
+      const coverScorePct = document.getElementById("coverScorePct");
+      const coverGrade = document.getElementById("coverGrade");
+      const statusBadge = document.getElementById("coverStatusBadge");
+
+      if (coverScorePts) coverScorePts.innerText = pts;
+      if (coverScorePct) coverScorePct.innerText = pct;
+      if (coverGrade) coverGrade.innerText = grade;
+      if (statusBadge) {
+        if (pctNum >= 70) {
+          statusBadge.className = "status-badge status-approved";
+          statusBadge.innerText = "✔ APROBADO";
+        } else {
+          statusBadge.className = "status-badge status-failed";
+          statusBadge.innerText = "✕ APLAZADO";
+        }
+      }
+
+      const scoreBox = document.getElementById("scoreBox");
+      const scoreText = document.getElementById("scoreText");
+      if (scoreBox && scoreText) {
+        scoreBox.style.display = "inline-flex";
+        scoreText.innerText = `${pts} / ${total} (${pct}%)`;
+      }
+
+      const btnDownloadReview = document.getElementById("btnDownloadReview");
+      if (btnDownloadReview) btnDownloadReview.style.display = "inline-flex";
+
+      // Aplicar respuestas y marcar opciones en las 60 preguntas
+      questionsData.forEach(q => {
+        const userAns = answers ? answers[q.id] : null;
+
+        letters.forEach(l => {
+          const radio = document.querySelector(`input[name="q${q.id}"][value="${l}"]`);
+          if (radio) {
+            radio.checked = (userAns === l);
+          }
+        });
+
+        const feedback = document.getElementById(`feedback-${q.id}`);
+        if (feedback) {
+          feedback.style.display = "block";
+          if (userAns === q.answer) {
+            feedback.className = "feedback correct-feedback";
+            feedback.innerHTML = `<strong>✔ ¡Correcto! Tu respuesta: ${q.answer}</strong><div style="margin-top: 4px;">${formatMathForKaTeX(q.exp)}</div>`;
+          } else {
+            feedback.className = "feedback wrong-feedback";
+            feedback.innerHTML = `<strong>✕ Incorrecto. Tu respuesta: ${userAns || "Sin respuesta"} | Respuesta correcta: ${q.answer}</strong><div style="margin-top: 4px;">${formatMathForKaTeX(q.exp)}</div>`;
+          }
+        }
+
+        letters.forEach(l => {
+          const lbl = document.getElementById(`label-${q.id}-${l}`);
+          if (lbl) {
+            lbl.style.background = "";
+            lbl.style.borderColor = "";
+            lbl.classList.remove("review-selected-correct", "review-selected-wrong", "review-correct-solution", "review-neutral");
+            const oldBadge = lbl.querySelector(".review-badge");
+            if (oldBadge) oldBadge.remove();
+
+            if (userAns === l && l === q.answer) {
+              lbl.classList.add("review-selected-correct");
+              const badge = document.createElement("span");
+              badge.className = "review-badge badge-correct";
+              badge.innerHTML = "✔ Tu respuesta (Correcta)";
+              lbl.appendChild(badge);
+            } else if (userAns === l && l !== q.answer) {
+              lbl.classList.add("review-selected-wrong");
+              const badge = document.createElement("span");
+              badge.className = "review-badge badge-wrong";
+              badge.innerHTML = "✕ Tu respuesta (Incorrecta)";
+              lbl.appendChild(badge);
+            } else if (l === q.answer) {
+              lbl.classList.add("review-correct-solution");
+              const badge = document.createElement("span");
+              badge.className = "review-badge badge-solution";
+              badge.innerHTML = "✔ Respuesta correcta";
+              lbl.appendChild(badge);
+            } else {
+              lbl.classList.add("review-neutral");
+            }
+          }
+
+          const b = document.getElementById(`bubble-${q.id}-${l}`);
+          if (b) {
+            b.classList.remove("correct", "wrong");
+            if (l === q.answer) b.classList.add("correct");
+            else if (userAns === l) b.classList.add("wrong");
+          }
+        });
+      });
+
+      window.lastExamResult = { score: pts, total, percentage: pct, grade };
+      window.lastExamDuration = { formatted: r.tiempo || "--" };
+
+      updateNavGrid();
+      setTimeout(renderAllMath, 50);
+    }
+
+    // Generar e imprimir / descargar el examen calificado de un estudiante en PDF
+    function generateStudentExamPDF(idx) {
+      const r = currentFilteredTeacherRecords ? currentFilteredTeacherRecords[idx] : teacherNormalizedRecords[idx];
+      if (!r) return;
+
+      const answers = parseStudentAnswers(r.respuestas);
+      if (!answers || Object.keys(answers).length === 0) {
+        alert(`ℹ️ El estudiante "${r.estudiante}" fue registrado sin el detalle individual de respuestas (ocurrió antes de esta actualización). A partir de ahora todas las pruebas guardan sus respuestas completas.`);
+        return;
+      }
+
+      applyStudentExamData(r, answers);
+      closeTeacherReportModal();
+
+      const originalTitle = document.title;
+      const safeName = (r.estudiante || "Estudiante").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const pts = r.buenas !== undefined && r.buenas !== "--" ? r.buenas : (r.puntos || "");
+      document.title = `Simulacro_Matematicas_2026_${safeName}_${pts}pts`;
+
+      document.body.classList.add("review-print-mode");
+
+      setTimeout(() => {
+        window.print();
+
+        const cleanup = () => {
+          document.body.classList.remove("review-print-mode");
+          document.title = originalTitle;
+          window.removeEventListener("afterprint", cleanup);
+          openTeacherReportModal();
+        };
+        window.addEventListener("afterprint", cleanup, { once: true });
+
+        setTimeout(() => {
+          document.body.classList.remove("review-print-mode");
+          document.title = originalTitle;
+        }, 2500);
+      }, 300);
+    }
+
+    // Ver el examen calificado del estudiante en pantalla
+    function viewStudentExamOnScreen(idx) {
+      const r = currentFilteredTeacherRecords ? currentFilteredTeacherRecords[idx] : teacherNormalizedRecords[idx];
+      if (!r) return;
+
+      const answers = parseStudentAnswers(r.respuestas);
+      if (!answers || Object.keys(answers).length === 0) {
+        alert(`ℹ️ El examen de "${r.estudiante}" no contiene el desglose de respuestas guardado.`);
+        return;
+      }
+
+      applyStudentExamData(r, answers);
+      closeTeacherReportModal();
+
+      const banner = document.getElementById("teacherViewingBanner");
+      const bannerName = document.getElementById("teacherViewingStudentName");
+      if (banner && bannerName) {
+        bannerName.innerText = `${r.estudiante} • Sección: ${r.seccion} • Nota: ${r.porcentaje} (${r.buenas}/60) • Tiempo: ${r.tiempo}`;
+        banner.style.display = "flex";
+      }
+
+      document.body.classList.remove("view-cover-mode");
+      document.body.classList.add("view-exam-mode");
+      goToQuestion(1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function returnToTeacherReport() {
+      const banner = document.getElementById("teacherViewingBanner");
+      if (banner) banner.style.display = "none";
+      openTeacherReportModal();
+    }
+
+    function exitTeacherViewing() {
+      const banner = document.getElementById("teacherViewingBanner");
+      if (banner) banner.style.display = "none";
+      returnToCover();
     }
 
     // Variables globales de estado
@@ -4146,9 +4496,18 @@
       // 7. Guardar último resultado
       window.lastExamResult = { score, total: questionsData.length, percentage, grade };
 
-      // 8. Enviar resultados a Google Sheets en segundo plano
+      // 8. Enviar resultados y guardar respuestas individuales completas
       const studentName = document.getElementById("studentNameInput").value.trim() || "Estudiante";
       const studentSection = document.getElementById("studentSectionInput").value.trim() || "No indicada";
+
+      // Recopilar respuestas seleccionadas en cada una de las 60 preguntas
+      const answersMap = {};
+      questionsData.forEach(q => {
+        const sel = document.querySelector(`input[name="q${q.id}"]:checked`);
+        if (sel) {
+          answersMap[q.id] = sel.value;
+        }
+      });
 
       const payload = {
         fecha: new Date().toLocaleString("es-CR"),
@@ -4163,7 +4522,10 @@
         tiempoSegundos: duration.seconds,
         correctas: score,
         incorrectas: questionsData.length - score,
-        preguntasIncorrectas: wrongQuestions.length > 0 ? wrongQuestions.join(", ") : "Ninguna"
+        preguntasIncorrectas: wrongQuestions.length > 0 ? wrongQuestions.join(", ") : "Ninguna",
+        respuestas: answersMap,
+        respuestasStr: JSON.stringify(answersMap),
+        respuestasDetalladas: Object.entries(answersMap).map(([id, a]) => `${id}:${a}`).join(", ")
       };
 
       sendResultsToGoogleSheets(payload);
