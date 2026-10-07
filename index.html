@@ -251,6 +251,28 @@
       background: #0369a1;
       transform: translateY(-1px);
     }
+    .btn-table-del {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      padding: 0.35rem 0.55rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-left: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      white-space: nowrap;
+    }
+    .btn-table-del:hover {
+      background: #ef4444;
+      color: white;
+      transform: translateY(-1px);
+    }
     .teacher-viewing-banner {
       background: #1e3a8a;
       color: #ffffff;
@@ -1832,8 +1854,11 @@
             placeholder="🔍 Buscar estudiante o sección..." 
             oninput="filterTeacherReport()"
           >
-          <button type="button" onclick="loadTeacherReportData()" style="background: #0284c7; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;">
-            🔄 Actualizar
+          <button type="button" onclick="loadTeacherReportData(true)" style="background: #0284c7; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;" title="Consultar las filas reales de Google Sheets en tiempo real">
+            🔄 Sincronizar en Vivo
+          </button>
+          <button type="button" onclick="clearTeacherLocalStorage()" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 0.85rem; padding: 0.5rem 0.8rem; font-weight: 600;" title="Borrar pruebas viejas guardadas en la memoria de este navegador">
+            🗑️ Limpiar Memoria Local
           </button>
           <button type="button" onclick="printTeacherReport()" style="background: #16a34a; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;">
             🖨️ Imprimir / PDF
@@ -3541,41 +3566,42 @@
 
     let teacherNormalizedRecords = [];
 
-    async function loadTeacherReportData() {
+    async function loadTeacherReportData(forceLive = false) {
       const statusEl = document.getElementById("teacherReportStatus");
       const notice = document.getElementById("teacherScriptNotice");
 
-      // 1. Obtener y renderizar de inmediato (en 0 ms) los registros guardados en el navegador
+      // 1. Obtener registros guardados en la memoria del navegador
       let localRecords = [];
       try {
         localRecords = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
-      } catch (e) {}
-
-      // Mostrar los datos locales inmediatamente para que la tabla nunca se quede colgada
-      parseAndRenderTeacherRecords([], localRecords);
-
-      if (statusEl) {
-        if (localRecords.length > 0) {
-          statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) guardados`;
-          statusEl.style.color = "#b45309";
-          statusEl.style.background = "#fef3c7";
-        } else {
-          statusEl.innerHTML = "⏳ Consultando datos...";
-          statusEl.style.color = "#0369a1";
-          statusEl.style.background = "#e0f2fe";
-        }
+      } catch (e) {
+        localRecords = [];
       }
 
-      // 2. Intentar consultar Google Sheets con tiempo límite de 4 segundos
+      // Si no es forzado y no tenemos nada en pantalla todavía, mostrar datos locales de inmediato (0 ms)
+      if (!forceLive && localRecords.length > 0 && teacherNormalizedRecords.length === 0) {
+        parseAndRenderTeacherRecords([], localRecords, false);
+      }
+
+      if (statusEl) {
+        statusEl.innerHTML = "⏳ Consultando Google Sheets en tiempo real...";
+        statusEl.style.color = "#0369a1";
+        statusEl.style.background = "#e0f2fe";
+      }
+
+      // 2. Consultar Google Sheets en vivo con parámetro anti-caché y tiempo límite de 12 segundos
       let fetchedRows = [];
       let liveSuccess = false;
 
       if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         try {
           const controller = new AbortController();
-          const timerId = setTimeout(() => controller.abort(), 4000);
+          const timerId = setTimeout(() => controller.abort(), 12000);
 
-          const resp = await fetch(GOOGLE_SHEETS_SCRIPT_URL, {
+          const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
+          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
+
+          const resp = await fetch(freshUrl, {
             method: "GET",
             redirect: "follow",
             signal: controller.signal
@@ -3586,7 +3612,7 @@
             const rawText = await resp.text();
             try {
               const result = JSON.parse(rawText);
-              if (result && Array.isArray(result.data) && result.data.length > 0) {
+              if (result && Array.isArray(result.data)) {
                 fetchedRows = result.data;
                 liveSuccess = true;
               }
@@ -3597,19 +3623,26 @@
         }
       }
 
-      // 3. Si se obtuvieron datos en vivo de Google Sheets, actualizar la tabla
-      if (liveSuccess && fetchedRows.length > 0) {
+      // 3. Renderizar resultados según el origen
+      if (liveSuccess) {
+        // GOOGLE SHEETS ES LA FUENTE OFICIAL EN VIVO
+        if (notice) notice.style.display = "none";
+
+        parseAndRenderTeacherRecords(fetchedRows, localRecords, true);
+
         if (statusEl) {
-          statusEl.innerHTML = "✔ Conectado a Google Sheets en tiempo real";
+          const rowCount = Math.max(0, fetchedRows.length > 1 ? fetchedRows.length - 1 : 0);
+          statusEl.innerHTML = `✔ Sincronizado en vivo con Google Sheets (${rowCount} estudiante${rowCount === 1 ? '' : 's'})`;
           statusEl.style.color = "#15803d";
           statusEl.style.background = "#dcfce7";
         }
-        if (notice) notice.style.display = "none";
-        parseAndRenderTeacherRecords(fetchedRows, localRecords);
       } else {
+        // Fallback: modo sin conexión o datos locales del navegador
+        parseAndRenderTeacherRecords([], localRecords, false);
+
         if (statusEl) {
           if (localRecords.length > 0) {
-            statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) guardados`;
+            statusEl.innerHTML = `⚡ Mostrando ${localRecords.length} resultado(s) guardados en memoria local`;
             statusEl.style.color = "#b45309";
             statusEl.style.background = "#fef3c7";
           } else {
@@ -3618,7 +3651,7 @@
             statusEl.style.background = "#f1f5f9";
           }
         }
-        if (notice && (!fetchedRows || fetchedRows.length === 0)) {
+        if (notice) {
           notice.style.display = "block";
         }
       }
@@ -3658,16 +3691,15 @@
       return {};
     }
 
-    function parseAndRenderTeacherRecords(fetchedRows, localRecords) {
+    function parseAndRenderTeacherRecords(fetchedRows, localRecords, isLive = false) {
       const records = [];
 
-      // Procesar filas de Google Sheets si existen
-      if (fetchedRows && fetchedRows.length > 0) {
+      // Si tenemos conexión en vivo con Google Sheets, SOLO mostramos lo que existe en la hoja actualmente
+      if (isLive && fetchedRows && fetchedRows.length > 0) {
         let headers = [];
         let startIndex = 0;
-        // Revisar si la primera fila son encabezados
         const firstRowStr = fetchedRows[0].join(" ").toLowerCase();
-        if (firstRowStr.includes("fecha") || firstRowStr.includes("estudiante") || firstRowStr.includes("nombre")) {
+        if (firstRowStr.includes("fecha") || firstRowStr.includes("estudiante") || firstRowStr.includes("nombre") || firstRowStr.includes("marca")) {
           headers = fetchedRows[0].map(h => String(h).trim().toLowerCase());
           startIndex = 1;
         }
@@ -3680,59 +3712,90 @@
         const fIdx = getIdx(/fecha|marca/, 0);
         const eIdx = getIdx(/estudiante|nombre/, 1);
         const sIdx = getIdx(/secci[oó]n/, 2);
-        const pctIdx = getIdx(/porcentaje|nota/, 5);
-        const bIdx = getIdx(/correcta|buena|punto/, 9);
-        const iIdx = getIdx(/incorrecta|mala/, 10);
-        const tIdx = getIdx(/tiempo|duraci[oó]n/, 8);
+        const pctIdx = getIdx(/porcentaje/, 5);
+        const bIdx = getIdx(/correcta|buena/, 10);
+        const iIdx = getIdx(/incorrecta|mala/, 11);
+        const tIdx = getIdx(/tiempo.*empleado|tiempo/, 8);
         const rIdx = getIdx(/respuesta/, 13);
 
         for (let i = startIndex; i < fetchedRows.length; i++) {
           const row = fetchedRows[i];
-          if (!row || row.length === 0 || !row[eIdx]) continue;
+          if (!row || row.length === 0) continue;
+          const estudianteNombre = (row[eIdx] !== undefined) ? String(row[eIdx]).trim() : "";
+          if (!estudianteNombre || estudianteNombre === "--") continue;
+
+          // Limpieza de sección si Google Sheets la convirtió a fecha ISO (ej: 2026-01-11T... => 11-1)
+          let seccionVal = row[sIdx] !== undefined ? String(row[sIdx]).trim() : "--";
+          if (seccionVal.includes("T") && seccionVal.includes("Z")) {
+            seccionVal = "11-1";
+          }
+
+          // Formateo de porcentaje
+          let rawPct = row[pctIdx] !== undefined ? String(row[pctIdx]).trim() : "--";
+          let pNum = parseFloat(rawPct);
+          if (!isNaN(pNum) && pNum > 0 && pNum < 1 && !rawPct.includes("%")) {
+            pNum = parseFloat((pNum * 100).toFixed(1));
+            rawPct = `${pNum}%`;
+          } else if (!rawPct.includes("%") && rawPct !== "--" && !isNaN(pNum)) {
+            rawPct = `${pNum}%`;
+          }
+
           const rawResp = (rIdx !== -1 && row[rIdx]) ? row[rIdx] : (row[13] || null);
-          const rawPct = row[pctIdx] !== undefined ? String(row[pctIdx]).trim() : "--";
-          const pctVal = rawPct.includes("%") ? rawPct : (rawPct !== "--" ? `${rawPct}%` : "--");
+
           records.push({
+            id: `sheet_${i}`,
+            origen: "sheets",
             fecha: row[fIdx] || "--",
-            estudiante: row[eIdx] || "--",
-            seccion: row[sIdx] || "--",
-            porcentaje: pctVal,
-            porcentajeNum: parseFloat(rawPct) || 0,
+            estudiante: estudianteNombre,
+            seccion: seccionVal,
+            porcentaje: rawPct,
+            porcentajeNum: isNaN(pNum) ? 0 : pNum,
             buenas: row[bIdx] !== undefined ? row[bIdx] : "--",
             incorrectas: row[iIdx] !== undefined ? row[iIdx] : "--",
             tiempo: row[tIdx] || "--",
             respuestas: parseStudentAnswers(rawResp)
           });
         }
-      }
 
-      // Integrar o enriquecer con los registros locales guardados en el navegador
-      if (localRecords && localRecords.length > 0) {
-        if (records.length === 0) {
-          localRecords.forEach(r => {
-            const rawPct = r.porcentaje !== undefined ? String(r.porcentaje).trim() : (r.nota !== undefined ? String(r.nota).trim() : "--");
-            const pctVal = rawPct.includes("%") ? rawPct : (rawPct !== "--" ? `${rawPct}%` : "--");
+        // Si la hoja no traía respuestas detalladas para algún alumno, enlazarlas con las guardadas localmente
+        if (localRecords && localRecords.length > 0) {
+          records.forEach(rec => {
+            if (!rec.respuestas || Object.keys(rec.respuestas).length === 0) {
+              const match = localRecords.find(lr => 
+                lr.estudiante && lr.estudiante.toLowerCase().trim() === rec.estudiante.toLowerCase().trim()
+              );
+              if (match && (match.respuestas || match.respuestasStr)) {
+                rec.respuestas = parseStudentAnswers(match.respuestas || match.respuestasStr);
+              }
+            }
+          });
+        }
+
+      } else if (!isLive) {
+        // MODO SIN CONEXIÓN O FALLBACK: Usar registros guardados en la memoria del navegador
+        if (localRecords && localRecords.length > 0) {
+          localRecords.forEach((r, idx) => {
+            let rawPct = r.porcentaje !== undefined ? String(r.porcentaje).trim() : (r.nota !== undefined ? String(r.nota).trim() : "--");
+            let pNum = parseFloat(rawPct);
+            if (!isNaN(pNum) && pNum > 0 && pNum < 1 && !rawPct.includes("%")) {
+              pNum = parseFloat((pNum * 100).toFixed(1));
+              rawPct = `${pNum}%`;
+            } else if (!rawPct.includes("%") && rawPct !== "--" && !isNaN(pNum)) {
+              rawPct = `${pNum}%`;
+            }
             records.push({
+              id: `local_${idx}`,
+              origen: "local",
               fecha: r.fecha || "--",
               estudiante: r.estudiante || "--",
               seccion: r.seccion || "--",
-              porcentaje: pctVal,
-              porcentajeNum: parseFloat(rawPct) || 0,
+              porcentaje: rawPct,
+              porcentajeNum: isNaN(pNum) ? 0 : pNum,
               buenas: r.correctas !== undefined ? r.correctas : (r.puntos !== undefined ? r.puntos : "--"),
               incorrectas: r.incorrectas !== undefined ? r.incorrectas : "--",
               tiempo: r.tiempo || "--",
               respuestas: parseStudentAnswers(r.respuestas || r.respuestasStr || r.respuestasDetalladas)
             });
-          });
-        } else {
-          // Enlazar respuestas locales si la hoja en la nube aún no tenía la columna de respuestas
-          records.forEach(rec => {
-            if (!rec.respuestas || Object.keys(rec.respuestas).length === 0) {
-              const match = localRecords.find(lr => lr.estudiante === rec.estudiante && (lr.fecha === rec.fecha || lr.seccion === rec.seccion));
-              if (match && (match.respuestas || match.respuestasStr)) {
-                rec.respuestas = parseStudentAnswers(match.respuestas || match.respuestasStr);
-              }
-            }
           });
         }
       }
@@ -3784,7 +3847,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="8" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
-              ${term ? "No se encontraron estudiantes que coincidan con la búsqueda." : "Aún no se han registrado respuestas de estudiantes."}
+              ${term ? "No se encontraron estudiantes que coincidan con la búsqueda." : "No hay estudiantes registrados en la hoja actualmente."}
             </td>
           </tr>
         `;
@@ -3817,12 +3880,40 @@
               <button type="button" class="btn-table-view" onclick="viewStudentExamOnScreen(${idx})" title="Ver este examen calificado en pantalla">
                 👁️ Ver
               </button>
+              <button type="button" class="btn-table-del" onclick="deleteTeacherRow(${idx})" title="Quitar este registro de la lista">
+                🗑️
+              </button>
             </td>
           </tr>
         `;
       });
 
       tbody.innerHTML = html;
+    }
+
+    function clearTeacherLocalStorage() {
+      if (confirm("¿Deseas vaciar los registros de prueba guardados en la memoria de este navegador?\n\n✔ Tu Hoja de Google Sheets NO se verá afectada.\n✔ Se eliminarán las pruebas viejas guardadas localmente en esta computadora.")) {
+        localStorage.removeItem("lrsi_saved_results");
+        loadTeacherReportData(true);
+      }
+    }
+
+    function deleteTeacherRow(idx) {
+      const rec = currentFilteredTeacherRecords[idx];
+      if (!rec) return;
+
+      if (confirm(`¿Deseas quitar a "${rec.estudiante}" de esta vista?`)) {
+        // Remover de localStorage si existía guardado localmente
+        try {
+          let saved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+          saved = saved.filter(r => !(r.estudiante === rec.estudiante && r.fecha === rec.fecha));
+          localStorage.setItem("lrsi_saved_results", JSON.stringify(saved));
+        } catch (e) {}
+
+        // Remover de la lista activa en pantalla
+        teacherNormalizedRecords = teacherNormalizedRecords.filter(r => r !== rec);
+        filterTeacherReport();
+      }
     }
 
     // Carga y reconstrucción de la prueba de un estudiante para el profesor

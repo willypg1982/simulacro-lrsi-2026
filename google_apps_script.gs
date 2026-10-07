@@ -27,7 +27,7 @@ function doGet(e) {
     }
 
     const sheet = ss.getActiveSheet();
-    const data = sheet.getDataRange().getValues();
+    const data = sheet.getDataRange().getDisplayValues();
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: "success", 
