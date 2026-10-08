@@ -2124,18 +2124,17 @@
     // RENDERIZADO MATEMÁTICO CON KATEX (Variables x, y y exponentes elevados)
     // =========================================================================
     function cleanLatex(s) {
+      const supMap = {
+        '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4',
+        '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9',
+        '⁺': '+', '⁻': '-', 'ˣ': 'x', 'ⁿ': 'n', 'ʸ': 'y'
+      };
       return s
         .replace(/·/g, "\\cdot ")
         .replace(/√\(\(([^\)]+)\)\/(\d+)\)/g, "\\sqrt{\\frac{$1}{$2}}")
         .replace(/√\(([^)]+)\)/g, "\\sqrt{$1}")
         .replace(/√([0-9a-zA-Z]+)/g, "\\sqrt{$1}")
-        .replace(/²/g, "^2")
-        .replace(/³/g, "^3")
-        .replace(/⁴/g, "^4")
-        .replace(/⁵/g, "^5")
-        .replace(/⁰/g, "^0")
-        .replace(/ˣ/g, "^x")
-        .replace(/⁻¹/g, "^{-1}")
+        .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ˣⁿʸ]+/g, m => "^{" + Array.from(m).map(c => supMap[c] || c).join("") + "}")
         .replace(/₂/g, "_2")
         .replace(/log₂\(([^\)]+)\)/g, "\\log_2($1)")
         .replace(/log₂/g, "\\log_2")
