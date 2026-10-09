@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Prueba de Matemáticas - Bachillerato / MEP</title>
 
   <!-- KaTeX: Tipografía matemática oficial (variables y exponentes) -->
@@ -4314,7 +4317,7 @@
     // Asignar automáticamente la fecha actual del sistema al cargar
     function setAutoCurrentDate() {
       const dateInput = document.getElementById("studentDateInput");
-      if (dateInput && !dateInput.value) {
+      if (dateInput) {
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, "0");
