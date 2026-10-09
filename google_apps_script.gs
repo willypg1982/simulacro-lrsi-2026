@@ -1,19 +1,19 @@
 /**
  * ============================================================================
  * SIMULACRO DE MATEMÁTICAS 2026 - LICEO RURAL SAN ISIDRO
- * Google Apps Script para registro, consulta y eliminación de resultados
+ * Google Apps Script para registro, consulta, descarga y gestión de resultados
  * Docente: Profesor William Pineda González
  * ============================================================================
  * 
  * INSTRUCCIONES DE ACTUALIZACIÓN:
  * 1. En tu Hoja de Cálculo de Google, ve a: Extensiones > Apps Script.
  * 2. Borra TODO el código anterior y pega este archivo completo.
- * 3. Haz clic en "Implementar" (botón azul arriba a la derecha) > "Nueva implementación".
+ * 3. Haz clic en "Implementar" (botón azul arriba a la derecha) > "Gestionar implementaciones"
+ *    o "Nueva implementación" > Versión nueva > "Implementar".
  * 4. Tipo: "Aplicación web".
  * 5. Ejecutar como: "Yo (tu cuenta de correo)".
  * 6. Quién tiene acceso: "Cualquier persona" (Anyone).
- * 7. Haz clic en "Implementar" y autoriza los permisos.
- * 8. Si la URL generada cambia, verifícala en index.html.
+ * 7. Autoriza los permisos si te los solicita.
  */
 
 function doGet(e) {
@@ -28,6 +28,59 @@ function doGet(e) {
 
     const sheet = ss.getActiveSheet();
     const action = e && e.parameter ? e.parameter.action : null;
+
+    // ACCIÓN: OBTENER EXAMEN POR CÓDIGO O CLAVE ÚNICA (PARA DESCARGA POSTERIOR)
+    if (action === "getExamByCode") {
+      const targetCode = String(e.parameter.codigo || "").trim().toLowerCase();
+      const values = sheet.getDataRange().getDisplayValues();
+
+      if (!targetCode || values.length <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "not_found", 
+          message: "No se proporcionó un código válido o la hoja no tiene registros." 
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // Detectar índice de la columna de código
+      let codeColIdx = 14; // Columna 15 por defecto
+      if (values.length > 0) {
+        const headers = values[0].map(h => String(h).trim().toLowerCase());
+        const found = headers.findIndex(h => /c[oó]digo|clave/.test(h));
+        if (found !== -1) codeColIdx = found;
+      }
+
+      // Buscar de la fila más reciente a la más antigua
+      for (let r = values.length - 1; r >= 1; r--) {
+        const row = values[r];
+        const rowCode = String(row[codeColIdx] || "").trim().toLowerCase();
+        if (rowCode && rowCode === targetCode) {
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "success", 
+            exam: {
+              fecha: row[0] || "",
+              estudiante: row[1] || "",
+              seccion: row[2] || "",
+              puntos: row[3] || "",
+              totalPuntos: row[4] || 60,
+              porcentaje: row[5] || "",
+              nota: row[6] || "",
+              condicion: row[7] || "",
+              tiempo: row[8] || "",
+              buenas: row[10] || row[3] || "",
+              incorrectas: row[11] || "",
+              preguntasIncorrectas: row[12] || "",
+              respuestas: row[13] || "",
+              codigo: row[codeColIdx] || ""
+            }
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "not_found", 
+        message: "No se encontró ningún examen registrado con la clave ingresada." 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
     // ACCIÓN: ELIMINAR UN REGISTRO VÍA GET
     if (action === "delete") {
@@ -90,7 +143,7 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getActiveSheet();
     
-    // Si la hoja está en blanco, crear encabezados automáticos con las 14 columnas oficiales
+    // Si la hoja está en blanco, crear encabezados automáticos con las 15 columnas oficiales
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         "Marca Temporal",
@@ -106,9 +159,10 @@ function doPost(e) {
         "Correctas",
         "Incorrectas",
         "Preguntas Incorrectas",
-        "Respuestas del Estudiante"
+        "Respuestas del Estudiante",
+        "Código Estudiante"
       ]);
-      const headerRange = sheet.getRange(1, 1, 1, 14);
+      const headerRange = sheet.getRange(1, 1, 1, 15);
       headerRange.setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
       sheet.setFrozenRows(1);
     }
@@ -156,7 +210,7 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // GUARDAR NUEVO RESULTADO (ACCIÓN POR DEFECTO)
+    // GUARDAR NUEVO RESULTADO (ACCIÓN POR DEFECTO CON CÓDIGO)
     sheet.appendRow([
       data.fecha || new Date().toLocaleString("es-CR"),
       data.estudiante || "Estudiante",
@@ -171,7 +225,8 @@ function doPost(e) {
       data.correctas,
       data.incorrectas,
       data.preguntasIncorrectas || "Ninguna",
-      data.respuestasStr || JSON.stringify(data.respuestas || {})
+      data.respuestasStr || JSON.stringify(data.respuestas || {}),
+      data.codigo || ""
     ]);
     
     return ContentService.createTextOutput(JSON.stringify({ status: "success", action: "save" }))
