@@ -3728,7 +3728,7 @@
       const modal = document.getElementById("teacherReportModal");
       if (modal) {
         modal.style.display = "flex";
-        loadTeacherReportData();
+        loadTeacherReportData(true);
       }
     }
 
@@ -3857,6 +3857,9 @@
         }
         if (notice) {
           notice.style.display = "block";
+        }
+        if (forceLive) {
+          alert("⚠️ No se pudo conectar directamente con Google Sheets en este momento.\n\nEl reporte está mostrando los datos guardados en la memoria de este navegador.\n\nSi realizaste cambios en la hoja y no los ves reflejados:\n1. Si tienes varias cuentas de Google abiertas en tu navegador, abre el simulacro en una pestaña de Modo Incógnito.\n2. Haz clic en el botón '🗑️ Limpiar Memoria Local' para descartar las copias viejas y forzar la recarga.");
         }
       }
     }
