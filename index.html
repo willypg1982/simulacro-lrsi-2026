@@ -1557,7 +1557,7 @@
         Calificación: <span id="scoreText">0 / 60</span>
       </div>
       <div class="btn-group">
-        <button class="btn-primary" onclick="gradeExam()">✔ Comprobar</button>
+        <button id="btnGradeExam" class="btn-primary" onclick="gradeExam()">✔ Comprobar</button>
         <button class="btn-sheet" onclick="openSheetModal()">📋 Hoja Respuestas</button>
         <button id="btnDownloadReview" class="btn-review-pdf" style="display: none;" onclick="downloadExamPDF()">📥 Descargar Examen Resuelto (PDF)</button>
         <button class="btn-retrieve-exam" onclick="openRetrieveExamModal()" title="Descargar examen ya realizado ingresando tu código o clave">📥 Descargar Examen Realizado</button>
@@ -1891,8 +1891,23 @@
             placeholder="🔍 Buscar estudiante o sección..." 
             oninput="filterTeacherReport()"
           >
+          <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1.5px solid #cbd5e1;">
+            <label for="teacherSortSelect" style="font-size: 0.82rem; font-weight: 700; color: #334155;">↕️ Ordenar:</label>
+            <select 
+              id="teacherSortSelect" 
+              onchange="filterTeacherReport()" 
+              style="padding: 0.35rem 0.6rem; border-radius: 5px; border: 1px solid #94a3b8; font-size: 0.85rem; font-weight: 700; color: #1e3a8a; background: white; cursor: pointer; outline: none;"
+            >
+              <option value="name_asc">🔤 Orden Alfabético (A - Z)</option>
+              <option value="grade_desc">🏆 Nota: Más alta a más baja</option>
+              <option value="grade_asc">📉 Nota: Más baja a más alta</option>
+            </select>
+          </div>
           <button type="button" onclick="loadTeacherReportData(true)" style="background: #0284c7; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem;" title="Consultar las filas reales de Google Sheets en tiempo real">
             🔄 Sincronizar en Vivo
+          </button>
+          <button type="button" onclick="cleanDuplicatesOnSheets()" style="background: #d97706; color: white; font-size: 0.85rem; padding: 0.5rem 0.9rem; font-weight: 600;" title="Depurar automáticamente filas repetidas con 0s y dejar solo 1 registro oficial por estudiante en Google Sheets">
+            🧹 Depurar Duplicados en Sheets
           </button>
           <button type="button" onclick="clearTeacherLocalStorage()" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 0.85rem; padding: 0.5rem 0.8rem; font-weight: 600;" title="Borrar pruebas viejas guardadas en la memoria de este navegador">
             🗑️ Limpiar Memoria Local
@@ -1918,6 +1933,9 @@
         <p class="cover-exam-type" style="font-size: 0.92rem; color: #0d9488; font-weight: 700;">Simulacro de Matemáticas 2026 • Bachillerato / MEP</p>
         <div class="cover-teacher-badge" style="display: inline-block; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.3rem 1rem; border-radius: 9999px; font-size: 0.88rem; margin-top: 6px;">
           <strong>Docente:</strong> Profesor William Pineda González
+        </div>
+        <div id="teacherReportSortSubtitle" style="font-size: 0.85rem; color: #0284c7; font-weight: 700; margin-top: 6px;">
+          Orden: Alfabético (A - Z)
         </div>
       </div>
 
@@ -1951,13 +1969,17 @@
           <thead>
             <tr>
               <th style="width: 14%;">Marca Temporal</th>
-              <th style="width: 22%;">Estudiante</th>
+              <th id="thTeacherStudent" style="width: 22%; cursor: pointer;" onclick="toggleTeacherSort('name')" title="Hacer clic para ordenar alfabéticamente">
+                Estudiante <span id="sortIndicatorStudent">▲</span>
+              </th>
               <th style="width: 8%;">Sección</th>
-              <th style="width: 11%;">Porcentaje / Nota</th>
+              <th id="thTeacherScore" style="width: 12%; cursor: pointer;" onclick="toggleTeacherSort('grade')" title="Hacer clic para ordenar por nota">
+                Porcentaje / Nota <span id="sortIndicatorScore">↕</span>
+              </th>
               <th style="width: 10%;">Buenas</th>
               <th style="width: 10%;">Incorrectas</th>
               <th style="width: 11%;">Tiempo</th>
-              <th style="width: 14%;" class="no-print-report">Examen Estudiante</th>
+              <th style="width: 13%;" class="no-print-report">Examen Estudiante</th>
             </tr>
           </thead>
           <tbody id="teacherReportTableBody">
@@ -2129,7 +2151,7 @@
       </div>
       <h3 style="color: #0f172a; margin-bottom: 0.35rem; font-size: 1.35rem; font-weight: 800;">Descargar Examen Realizado</h3>
       <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.3rem; line-height: 1.45;">
-        Ingresa a continuación el <strong>Código o Clave</strong> único que escribiste antes de comenzar tu prueba:
+        Ingresa a continuación tu <strong>Código / Clave personal</strong> o tu <strong>Nombre de estudiante</strong>:
       </p>
 
       <form onsubmit="handleRetrieveExamSubmit(event)">
@@ -2137,9 +2159,9 @@
           <input 
             type="text" 
             id="retrieveCodeInput" 
-            placeholder="Escribe tu código o clave aquí..." 
+            placeholder="Escribe tu código o tu nombre aquí..." 
             autocomplete="off"
-            style="width: 100%; padding: 0.75rem 1rem; font-size: 1.2rem; font-weight: 700; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);"
+            style="width: 100%; padding: 0.75rem 1rem; font-size: 1.15rem; font-weight: 700; text-align: center; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);"
           >
           <div id="retrieveCodeError" style="color: #dc2626; font-size: 0.85rem; font-weight: 600; margin-top: 0.6rem; display: none; text-align: left; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.6rem 0.85rem; border-radius: 6px; line-height: 1.4;">
           </div>
@@ -2158,6 +2180,15 @@
       <!-- Indicador de búsqueda en progreso -->
       <div id="retrieveLoading" style="display: none; margin-top: 1.2rem; color: #0284c7; font-size: 0.9rem; font-weight: 600;">
         ⏳ Buscando tu examen en el sistema...
+      </div>
+
+      <!-- Selector cuando hay múltiples coincidencias (ej: estudiantes con clave 1234) -->
+      <div id="retrieveMultiMatches" style="display: none; margin-top: 1.2rem; text-align: left; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 1rem;">
+        <span style="display: block; font-size: 0.85rem; font-weight: 700; color: #166534; margin-bottom: 0.6rem;">
+          👥 Se encontraron varios exámenes coincidentes. Selecciona el tuyo:
+        </span>
+        <div id="retrieveMatchesList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 240px; overflow-y: auto;">
+        </div>
       </div>
 
       <!-- Tarjeta de examen encontrado -->
@@ -2199,13 +2230,27 @@
     const GOOGLE_SHEETS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvqMOXh50piAP-1KxXM3GrRflBc9DZXjnwzSJz46b1oen6f2EoKnufozsXV4h2hpAEIg/exec";
 
     // Seguimiento silencioso del tiempo de examen (se inicia al pulsar Comenzar Examen)
-    // Limpiar cualquier marca de tiempo residual de sesiones anteriores
+    // Limpiar cualquier marca de tiempo residual de sesiones anteriores SOLO si no hay un examen ya concluido
     if (document.body && document.body.classList.contains("view-cover-mode")) {
-      sessionStorage.removeItem("lrsi_exam_start_time");
-      sessionStorage.removeItem("lrsi_exam_active");
+      if (!sessionStorage.getItem("lrsi_exam_final_duration")) {
+        sessionStorage.removeItem("lrsi_exam_start_time");
+        sessionStorage.removeItem("lrsi_exam_active");
+      }
     }
 
     function getExamDuration() {
+      // 1. Si ya se guardó la duración final del examen, respetarla siempre (nunca caer en 0 s)
+      try {
+        const finalSaved = sessionStorage.getItem("lrsi_exam_final_duration");
+        if (finalSaved) {
+          const parsed = JSON.parse(finalSaved);
+          if (parsed && (parsed.seconds > 0 || (parsed.formatted && parsed.formatted !== "0 s"))) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+
+      // 2. Si hay un examen en curso, calcular desde la hora de inicio registrada
       let start = parseInt(sessionStorage.getItem("lrsi_exam_start_time"));
       if (!start || isNaN(start)) {
         start = Date.now();
@@ -2475,14 +2520,16 @@
         <line x1="35" y1="170" x2="35" y2="20" stroke="#000" stroke-width="1.5"/><polygon points="32,20 35,15 38,20" fill="#000"/>
         <text x="195" y="159" font-size="11">x</text><text x="32" y="15" font-size="11">y</text>
         <polygon points="55,120 145,50 145,120 100,155" fill="rgba(37,99,235,0.06)" stroke="#000" stroke-width="1.8"/>
-        <circle cx="55" cy="120" r="2.5" fill="#000"/><text x="43" y="117" font-size="10">A</text>
-        <circle cx="145" cy="50" r="2.5" fill="#000"/><text x="142" y="42" font-size="10">B</text>
-        <circle cx="145" cy="120" r="2.5" fill="#000"/><text x="150" y="124" font-size="10">C</text>
-        <circle cx="100" cy="155" r="2.5" fill="#000"/><text x="96" y="168" font-size="10">D</text>
+        <circle cx="55" cy="120" r="2.5" fill="#000"/><text x="45" y="114" font-size="11" font-weight="600">A</text>
+        <circle cx="145" cy="50" r="2.5" fill="#000"/><text x="142" y="42" font-size="11" font-weight="600">B</text>
+        <circle cx="145" cy="120" r="2.5" fill="#000"/><text x="151" y="124" font-size="11" font-weight="600">C</text>
+        <circle cx="100" cy="155" r="2.5" fill="#000"/><text x="96" y="148" font-size="11" font-weight="600">D</text>
         <line x1="35" y1="50" x2="145" y2="50" stroke="#888" stroke-dasharray="2,2"/>
-        <line x1="35" y1="120" x2="55" y2="120" stroke="#888" stroke-dasharray="2,2"/>
-        <text x="20" y="54" font-size="10">10</text><text x="24" y="124" font-size="10">4</text>
-        <text x="52" y="168" font-size="10">2</text><text x="98" y="168" font-size="10">6</text><text x="140" y="168" font-size="10">10</text>
+        <line x1="35" y1="120" x2="145" y2="120" stroke="#888" stroke-dasharray="2,2"/>
+        <line x1="55" y1="120" x2="55" y2="155" stroke="#888" stroke-dasharray="2,2"/>
+        <line x1="145" y1="120" x2="145" y2="155" stroke="#888" stroke-dasharray="2,2"/>
+        <text x="18" y="54" font-size="10">10</text><text x="24" y="124" font-size="10">4</text>
+        <text x="52" y="168" font-size="10">2</text><text x="97" y="168" font-size="10">6</text><text x="139" y="168" font-size="10">10</text>
       </svg>`,
 
       q13: `<svg width="220" height="200" viewBox="0 0 220 200">
@@ -3450,7 +3497,11 @@
       if (currentQuestionIndex < 60) {
         goToQuestion(currentQuestionIndex + 1);
       } else {
-        gradeExam();
+        if (!window.isExamSubmitted) {
+          gradeExam();
+        } else {
+          openScoreModalAgain();
+        }
       }
     }
 
@@ -3938,11 +3989,30 @@
         }
       }
 
+      // Ordenar lista de registros alfabéticamente por nombre de estudiante (A-Z)
+      records.sort((a, b) => {
+        const nameA = String(a.estudiante || "").trim();
+        const nameB = String(b.estudiante || "").trim();
+        return nameA.localeCompare(nameB, "es", { sensitivity: "base" });
+      });
+
       teacherNormalizedRecords = records;
       filterTeacherReport();
     }
 
     let currentFilteredTeacherRecords = [];
+
+    function toggleTeacherSort(column) {
+      const select = document.getElementById("teacherSortSelect");
+      if (!select) return;
+
+      if (column === "name") {
+        select.value = (select.value === "name_asc") ? "name_desc" : "name_asc";
+      } else if (column === "grade") {
+        select.value = (select.value === "grade_desc") ? "grade_asc" : "grade_desc";
+      }
+      filterTeacherReport();
+    }
 
     function filterTeacherReport() {
       const searchInput = document.getElementById("teacherSearchInput");
@@ -3957,6 +4027,53 @@
           r.fecha.toLowerCase().includes(term)
         );
       });
+
+      const sortSelect = document.getElementById("teacherSortSelect");
+      const sortMode = sortSelect ? sortSelect.value : "name_asc";
+
+      // Ordenar según la selección del usuario
+      filtered.sort((a, b) => {
+        if (sortMode === "grade_desc") {
+          // De la nota más alta a la más baja (mayor a menor)
+          const scoreDiff = (b.porcentajeNum || 0) - (a.porcentajeNum || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return String(a.estudiante || "").trim().localeCompare(String(b.estudiante || "").trim(), "es", { sensitivity: "base" });
+        } else if (sortMode === "grade_asc") {
+          // De la nota más baja a la más alta (menor a mayor)
+          const scoreDiff = (a.porcentajeNum || 0) - (b.porcentajeNum || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return String(a.estudiante || "").trim().localeCompare(String(b.estudiante || "").trim(), "es", { sensitivity: "base" });
+        } else if (sortMode === "name_desc") {
+          // Alfabético descendente (Z - A)
+          return String(b.estudiante || "").trim().localeCompare(String(a.estudiante || "").trim(), "es", { sensitivity: "base" });
+        } else {
+          // Alfabético ascendente (A - Z) por defecto
+          return String(a.estudiante || "").trim().localeCompare(String(b.estudiante || "").trim(), "es", { sensitivity: "base" });
+        }
+      });
+
+      // Actualizar subtítulo y flechas de ordenación en pantalla y al imprimir
+      const sortSub = document.getElementById("teacherReportSortSubtitle");
+      const indStudent = document.getElementById("sortIndicatorStudent");
+      const indScore = document.getElementById("sortIndicatorScore");
+
+      if (sortMode === "grade_desc") {
+        if (sortSub) sortSub.innerText = "Orden: De la nota más alta a la más baja (Mayor a menor)";
+        if (indStudent) indStudent.innerText = "↕";
+        if (indScore) indScore.innerText = "▼ (Mayor a Menor)";
+      } else if (sortMode === "grade_asc") {
+        if (sortSub) sortSub.innerText = "Orden: De la nota más baja a la más alta (Menor a mayor)";
+        if (indStudent) indStudent.innerText = "↕";
+        if (indScore) indScore.innerText = "▲ (Menor a Mayor)";
+      } else if (sortMode === "name_desc") {
+        if (sortSub) sortSub.innerText = "Orden: Alfabético descendente (Z - A)";
+        if (indStudent) indStudent.innerText = "▼ (Z - A)";
+        if (indScore) indScore.innerText = "↕";
+      } else {
+        if (sortSub) sortSub.innerText = "Orden: Alfabético ascendente (A - Z)";
+        if (indStudent) indStudent.innerText = "▲ (A - Z)";
+        if (indScore) indScore.innerText = "↕";
+      }
 
       currentFilteredTeacherRecords = filtered;
 
@@ -4010,7 +4127,12 @@
             </td>
             <td style="color: #16a34a; font-weight: 700;">${r.buenas}</td>
             <td style="color: #dc2626; font-weight: 700;">${r.incorrectas}</td>
-            <td style="color: #0284c7; font-weight: 600;">${r.tiempo}</td>
+            <td>
+              ${(r.tiempo === "0 s" || r.tiempo === "0") 
+                ? '<span style="color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700;" title="Reintento posterior con respuestas modificadas">⚠️ 0 s (Reintento)</span>' 
+                : `<span style="color: #0284c7; font-weight: 600;">${r.tiempo}</span>`
+              }
+            </td>
             <td class="no-print-report" style="white-space: nowrap;">
               <button type="button" class="btn-table-pdf" onclick="generateStudentExamPDF(${idx})" title="Descargar o imprimir el examen calificado de este estudiante en PDF">
                 📥 Examen PDF
@@ -4027,6 +4149,36 @@
       });
 
       tbody.innerHTML = html;
+    }
+
+    async function cleanDuplicatesOnSheets() {
+      if (!confirm("¿Deseas depurar los registros duplicados en Google Sheets?\n\n✔ Se conservará únicamente el intento oficial de cada estudiante (con tiempo real).\n✔ Se eliminarán automáticamente las 39 filas repetidas con 0 segundos.\n✔ Tu consolidado quedará con exactamente 1 registro oficial por estudiante.")) {
+        return;
+      }
+
+      const statusEl = document.getElementById("teacherReportStatus");
+      if (statusEl) {
+        statusEl.innerHTML = "⏳ Depurando registros duplicados en Google Sheets...";
+        statusEl.style.color = "#d97706";
+        statusEl.style.background = "#fef3c7";
+      }
+
+      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        try {
+          const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
+          const cleanUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=cleanDuplicates&t=${Date.now()}`;
+          const res = await fetch(cleanUrl, { method: "GET", redirect: "follow" });
+          if (res.ok) {
+            const data = await res.json();
+            alert(`✔ ¡Depuración completada!\n\n${data.message || 'Se depuraron los registros duplicados con éxito.'}`);
+          }
+        } catch (e) {
+          console.warn("Fallo en cleanDuplicates vía web:", e);
+          alert("ℹ️ Si aún no has actualizado tu Apps Script en Google Sheets con la última versión, puedes ejecutar la función 'limpiarDuplicadosConservarOficial' directamente en Extensiones > Apps Script.");
+        }
+      }
+
+      await loadTeacherReportData(true);
     }
 
     async function clearTeacherLocalStorage() {
@@ -4357,125 +4509,13 @@
       if (modal) modal.style.display = "none";
     }
 
-    async function handleRetrieveExamSubmit(event) {
-      if (event) event.preventDefault();
+    let currentRetrievedMatches = [];
 
-      const codeInput = document.getElementById("retrieveCodeInput");
-      const errBox = document.getElementById("retrieveCodeError");
+    function renderRetrievedExamCard(foundRecord) {
       const card = document.getElementById("retrieveResultCard");
-      const loading = document.getElementById("retrieveLoading");
-
-      const code = codeInput ? codeInput.value.trim() : "";
+      const errBox = document.getElementById("retrieveCodeError");
       if (errBox) errBox.style.display = "none";
-      if (card) card.style.display = "none";
 
-      if (!code) {
-        if (errBox) {
-          errBox.innerHTML = "⚠️ Por favor ingresa el <strong>Código o Clave</strong> de tu examen.";
-          errBox.style.display = "block";
-        }
-        if (codeInput) {
-          codeInput.style.borderColor = "#dc2626";
-          codeInput.focus();
-        }
-        return;
-      }
-
-      if (codeInput) codeInput.style.borderColor = "#cbd5e1";
-      if (loading) loading.style.display = "block";
-
-      const targetCode = code.toLowerCase();
-      let foundRecord = null;
-
-      // 1. Buscar en registros locales de este navegador
-      try {
-        const byCode = JSON.parse(localStorage.getItem("lrsi_student_exams_by_code") || "{}");
-        if (byCode[targetCode]) {
-          foundRecord = byCode[targetCode];
-        }
-      } catch (e) {}
-
-      if (!foundRecord) {
-        try {
-          const localSaved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
-          const match = localSaved.find(r => r.codigo && String(r.codigo).trim().toLowerCase() === targetCode);
-          if (match) foundRecord = match;
-        } catch (e) {}
-      }
-
-      // 2. Si no se encontró en memoria local o para verificar datos más frescos en Google Sheets
-      if (!foundRecord && GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
-        try {
-          const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-          // Intento 1: acción optimizada getExamByCode
-          const getUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=getExamByCode&codigo=${encodeURIComponent(code)}&t=${Date.now()}`;
-          const res = await fetch(getUrl, { method: "GET", redirect: "follow" });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.status === "success" && data.exam) {
-              foundRecord = data.exam;
-            }
-          }
-        } catch (e) {
-          console.warn("Fallo en getExamByCode directo:", e);
-        }
-
-        // Intento 2: si la acción no existía en el script anterior, consultar filas completas
-        if (!foundRecord) {
-          try {
-            const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-            const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
-            const res2 = await fetch(freshUrl, { method: "GET", redirect: "follow" });
-            if (res2.ok) {
-              const data2 = await res2.json();
-              if (data2 && Array.isArray(data2.data) && data2.data.length > 1) {
-                const rows = data2.data;
-                const headers = rows[0].map(h => String(h).trim().toLowerCase());
-                let codeIdx = headers.findIndex(h => /c[oó]digo|clave/.test(h));
-                if (codeIdx === -1) codeIdx = 14;
-
-                for (let r = rows.length - 1; r >= 1; r--) {
-                  const row = rows[r];
-                  const cVal = String(row[codeIdx] || "").trim().toLowerCase();
-                  if (cVal === targetCode) {
-                    foundRecord = {
-                      fecha: row[0] || "--",
-                      estudiante: row[1] || "Estudiante",
-                      seccion: row[2] || "--",
-                      puntos: row[3] || row[10] || "--",
-                      totalPuntos: row[4] || 60,
-                      porcentaje: row[5] || "--",
-                      nota: row[6] || "--",
-                      condicion: row[7] || "--",
-                      tiempo: row[8] || "--",
-                      buenas: row[10] || row[3] || "--",
-                      incorrectas: row[11] || "--",
-                      preguntasIncorrectas: row[12] || "",
-                      respuestas: row[13] || "",
-                      codigo: row[codeIdx] || code
-                    };
-                    break;
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            console.warn("Fallo en consulta de filas fallback:", e);
-          }
-        }
-      }
-
-      if (loading) loading.style.display = "none";
-
-      if (!foundRecord) {
-        if (errBox) {
-          errBox.innerHTML = `✕ <strong>No se encontró ningún examen</strong> con la clave "<strong>${code}</strong>".<br><span style="font-size:0.8rem; font-weight:normal; opacity:0.9;">Verifica haber escrito la clave tal como la registraste antes de iniciar el examen.</span>`;
-          errBox.style.display = "block";
-        }
-        return;
-      }
-
-      // Procesar respuestas del examen encontrado
       const answers = parseStudentAnswers(foundRecord.respuestas || foundRecord.respuestasStr || foundRecord.respuestasDetalladas);
       window.retrievedExamData = { record: foundRecord, answers: answers };
 
@@ -4489,7 +4529,7 @@
       const dateEl = document.getElementById("retrievedDate");
 
       if (nameEl) nameEl.innerText = foundRecord.estudiante || "Estudiante";
-      if (metaEl) metaEl.innerText = `Sección: ${foundRecord.seccion || '--'} • Código: ${foundRecord.codigo || code}`;
+      if (metaEl) metaEl.innerText = `Sección: ${foundRecord.seccion || '--'} • Código: ${foundRecord.codigo || '--'}`;
 
       let rawPct = String(foundRecord.porcentaje || "").replace("%", "");
       let pctNum = parseFloat(rawPct);
@@ -4511,7 +4551,180 @@
       if (durEl) durEl.innerText = foundRecord.tiempo || "--";
       if (dateEl) dateEl.innerText = foundRecord.fecha || "--";
 
-      if (card) card.style.display = "block";
+      if (card) {
+        card.style.display = "block";
+        card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
+    function selectRetrievedMatch(idx) {
+      if (currentRetrievedMatches && currentRetrievedMatches[idx]) {
+        renderRetrievedExamCard(currentRetrievedMatches[idx]);
+        const btns = document.querySelectorAll("#retrieveMatchesList button");
+        btns.forEach((b, i) => {
+          if (i === idx) {
+            b.style.borderColor = "#0d9488";
+            b.style.background = "#ccfbf1";
+          } else {
+            b.style.borderColor = "#cbd5e1";
+            b.style.background = "white";
+          }
+        });
+      }
+    }
+
+    async function handleRetrieveExamSubmit(event) {
+      if (event) event.preventDefault();
+
+      const codeInput = document.getElementById("retrieveCodeInput");
+      const errBox = document.getElementById("retrieveCodeError");
+      const card = document.getElementById("retrieveResultCard");
+      const loading = document.getElementById("retrieveLoading");
+      const multiContainer = document.getElementById("retrieveMultiMatches");
+      const matchesList = document.getElementById("retrieveMatchesList");
+
+      const query = (codeInput ? codeInput.value.trim() : "").toLowerCase();
+      if (errBox) errBox.style.display = "none";
+      if (card) card.style.display = "none";
+      if (multiContainer) multiContainer.style.display = "none";
+      if (matchesList) matchesList.innerHTML = "";
+      currentRetrievedMatches = [];
+
+      if (!query) {
+        if (errBox) {
+          errBox.innerHTML = "⚠️ Por favor ingresa tu <strong>Código, Clave o Nombre completo</strong>.";
+          errBox.style.display = "block";
+        }
+        if (codeInput) {
+          codeInput.style.borderColor = "#dc2626";
+          codeInput.focus();
+        }
+        return;
+      }
+
+      if (codeInput) codeInput.style.borderColor = "#cbd5e1";
+      if (loading) loading.style.display = "block";
+
+      const allMatches = [];
+
+      // 1. Buscar en memoria local de este navegador
+      try {
+        const localSaved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+        localSaved.forEach(r => {
+          const c = String(r.codigo || "").toLowerCase().trim();
+          const n = String(r.estudiante || "").toLowerCase().trim();
+          if ((c && c === query) || (n && n.includes(query))) {
+            allMatches.push(r);
+          }
+        });
+      } catch (e) {}
+
+      // 2. Consultar Google Sheets
+      if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
+        try {
+          const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
+          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
+          const res = await fetch(freshUrl, { method: "GET", redirect: "follow" });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.data) && data.data.length > 1) {
+              const rows = data.data;
+              const headers = rows[0].map(h => String(h).trim().toLowerCase());
+              let codeIdx = headers.findIndex(h => /c[oó]digo|clave/.test(h));
+              if (codeIdx === -1) codeIdx = 14;
+              let nameIdx = headers.findIndex(h => /estudiante|nombre/.test(h));
+              if (nameIdx === -1) nameIdx = 1;
+
+              for (let r = 1; r < rows.length; r++) {
+                const row = rows[r];
+                if (!row || row.length === 0) continue;
+                const cVal = String(row[codeIdx] || "").trim().toLowerCase();
+                const nVal = String(row[nameIdx] || "").trim().toLowerCase();
+
+                if ((cVal && cVal === query) || (nVal && nVal.includes(query))) {
+                  allMatches.push({
+                    fecha: row[0] || "--",
+                    estudiante: row[nameIdx] || "Estudiante",
+                    seccion: row[2] || "--",
+                    puntos: row[3] || row[10] || "--",
+                    totalPuntos: row[4] || 60,
+                    porcentaje: row[5] || "--",
+                    nota: row[6] || "--",
+                    condicion: row[7] || "--",
+                    tiempo: row[8] || "--",
+                    tiempoSegundos: row[9] || "",
+                    buenas: row[10] || row[3] || "--",
+                    incorrectas: row[11] || "--",
+                    preguntasIncorrectas: row[12] || "",
+                    respuestas: row[13] || "",
+                    codigo: row[codeIdx] || ""
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Fallo al consultar Google Sheets para recuperación:", e);
+        }
+      }
+
+      if (loading) loading.style.display = "none";
+
+      // 3. Deduplicar por nombre de estudiante (si entregó múltiples veces, priorizar su intento con tiempo real oficial > 0s)
+      const uniqueByStudent = [];
+      allMatches.forEach(rec => {
+        const studentKey = String(rec.estudiante || "").toLowerCase().trim();
+        const existingIdx = uniqueByStudent.findIndex(u => String(u.estudiante || "").toLowerCase().trim() === studentKey);
+        if (existingIdx === -1) {
+          uniqueByStudent.push(rec);
+        } else {
+          const existing = uniqueByStudent[existingIdx];
+          if ((existing.tiempo === "0 s" || existing.tiempo === "0") && (rec.tiempo && rec.tiempo !== "0 s" && rec.tiempo !== "0")) {
+            uniqueByStudent[existingIdx] = rec;
+          }
+        }
+      });
+
+      if (uniqueByStudent.length === 0) {
+        if (errBox) {
+          errBox.innerHTML = `✕ <strong>No se encontró ningún examen</strong> con la búsqueda "<strong>${codeInput ? codeInput.value.trim() : ''}</strong>".<br><span style="font-size:0.8rem; font-weight:normal; opacity:0.9;">Verifica haber escrito la clave o tu nombre exactamente como lo registraste al inicio.</span>`;
+          errBox.style.display = "block";
+        }
+        return;
+      }
+
+      currentRetrievedMatches = uniqueByStudent;
+
+      // 4. Si solo hay 1 examen coincidente, mostrarlo de inmediato
+      if (uniqueByStudent.length === 1) {
+        renderRetrievedExamCard(uniqueByStudent[0]);
+        return;
+      }
+
+      // 5. Si hay múltiples coincidencias (ej: estudiantes con clave 1234), listar los estudiantes para seleccionar
+      if (multiContainer && matchesList) {
+        matchesList.innerHTML = "";
+        uniqueByStudent.forEach((m, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.style.cssText = "display: flex; justify-content: space-between; align-items: center; text-align: left; background: white; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.65rem 0.9rem; cursor: pointer; transition: all 0.2s; width: 100%; font-size: 0.88rem;";
+          btn.innerHTML = `
+            <div>
+              <strong style="color: #0f172a; display: block; font-size: 0.95rem;">${m.estudiante}</strong>
+              <span style="color: #64748b; font-size: 0.8rem;">Sección: ${m.seccion || '--'} • Clave: ${m.codigo || '--'}</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-weight: 800; color: #1e3a8a; display: block;">${m.porcentaje || '--'}</span>
+              <span style="font-size: 0.75rem; color: #64748b;">${m.buenas || m.puntos || '0'}/60 pts</span>
+            </div>
+          `;
+          btn.onclick = () => selectRetrievedMatch(idx);
+          matchesList.appendChild(btn);
+        });
+
+        multiContainer.style.display = "block";
+        selectRetrievedMatch(0);
+      }
     }
 
     function downloadRetrievedExamPDF() {
@@ -4688,6 +4901,8 @@
       if (!sessionStorage.getItem("lrsi_exam_active") || !sessionStorage.getItem("lrsi_exam_start_time")) {
         sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
         sessionStorage.setItem("lrsi_exam_active", "true");
+        sessionStorage.removeItem("lrsi_exam_final_duration");
+        window.isExamSubmitted = false;
       }
 
       // Sincronizar datos y cambiar a modo examen
@@ -4848,6 +5063,9 @@
       document.body.classList.remove("view-cover-mode");
       document.body.classList.add("view-exam-mode");
       goToQuestion(1);
+      if (typeof lockExamInputs === "function") {
+        lockExamInputs();
+      }
     }
 
     // Envío silencioso de resultados a Google Sheets
@@ -4939,8 +5157,33 @@
       }, 250);
     }
 
-    // Calificación interactiva
+    // Calificación interactiva y control de entrega única
+    window.isExamSubmitted = false;
+    let isSubmitting = false;
+
+    function lockExamInputs() {
+      // 1. Deshabilitar todas las opciones para que no se puedan cambiar respuestas
+      document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.disabled = true;
+      });
+      // 2. Modificar el botón superior para que solo sirva para ver la calificación
+      const btn = document.getElementById("btnGradeExam");
+      if (btn) {
+        btn.innerHTML = "🏆 Ver Calificación";
+        btn.style.background = "#059669";
+        btn.disabled = false;
+        btn.onclick = openScoreModalAgain;
+      }
+    }
+
     function gradeExam() {
+      // Si el examen ya fue entregado y calificado, solo mostrar la ventana de resultados
+      if (window.isExamSubmitted) {
+        openScoreModalAgain();
+        return;
+      }
+      if (isSubmitting) return;
+
       // 1. Validar que todas las preguntas estén contestadas
       const unanswered = [];
       questionsData.forEach((q) => {
@@ -4953,6 +5196,13 @@
       if (unanswered.length > 0) {
         showIncompleteModal(unanswered);
         return; // NO dar la nota ni revelar respuestas
+      }
+
+      isSubmitting = true;
+      const btn = document.getElementById("btnGradeExam");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "⏳ Calificando...";
       }
 
       // 2. Si todas están contestadas, calificar la prueba
@@ -5024,13 +5274,20 @@
       const percentageNum = parseFloat(percentage);
       const grade = Math.round(percentageNum);
 
-      // Tiempo empleado (se calcula y revela SOLO al pulsar comprobar)
+      // Tiempo empleado (se calcula y congela en la primera entrega oficial)
       const duration = getExamDuration();
       window.lastExamDuration = duration;
+      try {
+        sessionStorage.setItem("lrsi_exam_final_duration", JSON.stringify(duration));
+      } catch (e) {}
 
-      // Limpiar temporizador para que cualquier nuevo examen inicie estrictamente desde cero
+      // Limpiar temporizador activo sin perder la duración final guardada
       sessionStorage.removeItem("lrsi_exam_start_time");
       sessionStorage.removeItem("lrsi_exam_active");
+
+      // Bloquear el examen permanentemente en modo solo lectura para evitar alteraciones
+      window.isExamSubmitted = true;
+      lockExamInputs();
 
       // Actualizar campo de tiempo en la portada para PDF y revisión
       const coverDurationField = document.getElementById("coverDurationField");
@@ -5111,6 +5368,7 @@
 
       // 9. Abrir ventana emergente con la nota y el tiempo empleado
       openScoreModal(score, questionsData.length, percentage, grade);
+      isSubmitting = false;
     }
   </script>
 </body>
