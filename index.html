@@ -1843,7 +1843,8 @@
       </p>
 
       <form onsubmit="verifyTeacherPin(event)">
-        <div style="margin-bottom: 1.2rem;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Clave de acceso:</label>
           <input 
             type="password" 
             id="teacherPinInput" 
@@ -1859,12 +1860,26 @@
           </div>
         </div>
 
+        <div style="margin-bottom: 1.3rem; text-align: left; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 0.9rem;">
+          <label for="teacherInitialSortSelect" style="display: block; font-size: 0.82rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.4rem;">
+            📋 Ordenar reporte por:
+          </label>
+          <select 
+            id="teacherInitialSortSelect" 
+            style="width: 100%; padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid #94a3b8; font-size: 0.86rem; font-weight: 700; color: #1e3a8a; background: white; cursor: pointer; outline: none;"
+          >
+            <option value="name_asc">🔤 Orden Alfabético por nombre (A - Z)</option>
+            <option value="grade_desc">🏆 Orden por nota (Más alta a más baja)</option>
+            <option value="grade_asc">📉 Orden por nota (Más baja a más alta)</option>
+          </select>
+        </div>
+
         <div style="display: flex; gap: 0.6rem; justify-content: center;">
           <button type="button" onclick="closeTeacherAuthModal()" style="background: #e2e8f0; color: #334155; padding: 0.55rem 1.2rem; font-size: 0.9rem;">
             Cancelar
           </button>
-          <button type="submit" style="background: #4f46e5; color: white; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
-            Ingresar
+          <button type="submit" style="background: #4f46e5; color: white; padding: 0.55rem 1.4rem; font-size: 0.9rem; font-weight: 700;">
+            Generar Reporte
           </button>
         </div>
       </form>
@@ -1968,23 +1983,24 @@
         <table class="teacher-report-table">
           <thead>
             <tr>
+              <th style="width: 4%; text-align: center;">N°</th>
               <th style="width: 14%;">Marca Temporal</th>
               <th id="thTeacherStudent" style="width: 22%; cursor: pointer;" onclick="toggleTeacherSort('name')" title="Hacer clic para ordenar alfabéticamente">
                 Estudiante <span id="sortIndicatorStudent">▲</span>
               </th>
-              <th style="width: 8%;">Sección</th>
+              <th style="width: 7%;">Sección</th>
               <th id="thTeacherScore" style="width: 12%; cursor: pointer;" onclick="toggleTeacherSort('grade')" title="Hacer clic para ordenar por nota">
                 Porcentaje / Nota <span id="sortIndicatorScore">↕</span>
               </th>
-              <th style="width: 10%;">Buenas</th>
-              <th style="width: 10%;">Incorrectas</th>
-              <th style="width: 11%;">Tiempo</th>
+              <th style="width: 9%;">Buenas</th>
+              <th style="width: 9%;">Incorrectas</th>
+              <th style="width: 10%;">Tiempo</th>
               <th style="width: 13%;" class="no-print-report">Examen Estudiante</th>
             </tr>
           </thead>
           <tbody id="teacherReportTableBody">
             <tr>
-              <td colspan="8" style="padding: 2rem; color: #64748b; font-style: italic;">
+              <td colspan="9" style="padding: 2rem; color: #64748b; font-style: italic;">
                 Cargando registros...
               </td>
             </tr>
@@ -3691,6 +3707,11 @@
       const val = input ? input.value.trim() : "";
 
       if (val === "1331") {
+        const initialSort = document.getElementById("teacherInitialSortSelect");
+        const teacherSort = document.getElementById("teacherSortSelect");
+        if (initialSort && teacherSort) {
+          teacherSort.value = initialSort.value;
+        }
         closeTeacherAuthModal();
         openTeacherReportModal();
       } else {
@@ -3751,7 +3772,7 @@
         if (tbody) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="8" style="padding: 2.5rem 1rem; color: #0284c7; font-weight: 600; text-align: center;">
+              <td colspan="9" style="padding: 2.5rem 1rem; color: #0284c7; font-weight: 600; text-align: center;">
                 ⏳ Conectando en tiempo real con Google Sheets... Por favor espera unos segundos.
               </td>
             </tr>
@@ -4101,7 +4122,7 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
+            <td colspan="9" style="padding: 2.5rem 1rem; color: #64748b; font-style: italic;">
               ${term ? "No se encontraron estudiantes que coincidan con la búsqueda." : "No hay estudiantes registrados en la hoja actualmente."}
             </td>
           </tr>
@@ -4117,6 +4138,7 @@
 
         html += `
           <tr>
+            <td style="font-weight: 700; color: #475569; font-size: 0.85rem; text-align: center; background: #f8fafc;">${idx + 1}</td>
             <td style="color: #64748b; font-size: 0.82rem; font-weight: 500;">${r.fecha}</td>
             <td style="text-align: left; font-weight: 700; color: #1e3a8a;">${r.estudiante}</td>
             <td><span style="background: #e2e8f0; color: #334155; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.82rem;">${r.seccion}</span></td>
