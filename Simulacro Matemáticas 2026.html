@@ -3919,10 +3919,14 @@
         const fIdx = getIdx(/fecha|marca/, 0);
         const eIdx = getIdx(/estudiante|nombre/, 1);
         const sIdx = getIdx(/secci[oó]n/, 2);
+        const pIdx = getIdx(/^puntos?$/, 3);
+        const totIdx = getIdx(/total.*puntos?|total/, 4);
         const pctIdx = getIdx(/porcentaje/, 5);
+        const notaIdx = getIdx(/nota/, 6);
+        const condIdx = getIdx(/condici[oó]n/, 7);
+        const tIdx = getIdx(/tiempo.*empleado|tiempo/, 8);
         const bIdx = getIdx(/correcta|buena/, 10);
         const iIdx = getIdx(/incorrecta|mala/, 11);
-        const tIdx = getIdx(/tiempo.*empleado|tiempo/, 8);
         const rIdx = getIdx(/respuesta/, 13);
         const cIdx = getIdx(/c[oó]digo|clave/, 14);
 
@@ -3938,14 +3942,50 @@
             seccionVal = "11-1";
           }
 
-          // Formateo de porcentaje
+          // Total de puntos del examen (por defecto 60)
+          let totalPts = 60;
+          if (totIdx !== -1 && row[totIdx] !== undefined && String(row[totIdx]).trim() !== "") {
+            const tpNum = parseFloat(String(row[totIdx]).replace(/[^0-9.]/g, ""));
+            if (!isNaN(tpNum) && tpNum > 0) totalPts = tpNum;
+          }
+
+          // Obtener puntos / correctas: si el docente editó 'Puntos' (col D) o 'Correctas' (col K)
+          let valPuntos = (pIdx !== -1 && row[pIdx] !== undefined) ? String(row[pIdx]).trim() : "";
+          let valCorrectas = (bIdx !== -1 && row[bIdx] !== undefined) ? String(row[bIdx]).trim() : "";
+          
+          let buenasStr = valPuntos !== "" ? valPuntos : (valCorrectas !== "" ? valCorrectas : "--");
+          // Si el docente editó la columna Puntos (col D) y difiere de Correctas (col K), priorizar Puntos editado
+          if (valPuntos !== "" && valCorrectas !== "" && valPuntos !== valCorrectas) {
+            buenasStr = valPuntos;
+          }
+          let buenasNum = parseFloat(buenasStr);
+
+          // Incorrectas: si se editaron las buenas, calcular automáticamente con respecto al total
+          let valIncorrectas = (iIdx !== -1 && row[iIdx] !== undefined) ? String(row[iIdx]).trim() : "--";
+          if (!isNaN(buenasNum)) {
+            valIncorrectas = String(Math.max(0, Math.round(totalPts - buenasNum)));
+          }
+
+          // Formateo y recálculo inteligente de porcentaje y nota
           let rawPct = row[pctIdx] !== undefined ? String(row[pctIdx]).trim() : "--";
           let pNum = parseFloat(rawPct);
-          if (!isNaN(pNum) && pNum > 0 && pNum < 1 && !rawPct.includes("%")) {
-            pNum = parseFloat((pNum * 100).toFixed(1));
-            rawPct = `${pNum}%`;
-          } else if (!rawPct.includes("%") && rawPct !== "--" && !isNaN(pNum)) {
-            rawPct = `${pNum}%`;
+
+          if (!isNaN(buenasNum)) {
+            const calcPct = parseFloat(((buenasNum / totalPts) * 100).toFixed(1));
+            // Si el porcentaje no está definido o difiere sustancialmente de los puntos actuales (docente editó la nota en Sheets)
+            if (isNaN(pNum) || Math.abs(pNum - calcPct) > 0.5) {
+              pNum = calcPct;
+              rawPct = `${calcPct}%`;
+            } else if (!rawPct.includes("%")) {
+              rawPct = `${pNum}%`;
+            }
+          } else {
+            if (!isNaN(pNum) && pNum > 0 && pNum < 1 && !rawPct.includes("%")) {
+              pNum = parseFloat((pNum * 100).toFixed(1));
+              rawPct = `${pNum}%`;
+            } else if (!rawPct.includes("%") && rawPct !== "--" && !isNaN(pNum)) {
+              rawPct = `${pNum}%`;
+            }
           }
 
           const rawResp = (rIdx !== -1 && row[rIdx]) ? row[rIdx] : (row[13] || null);
@@ -3958,8 +3998,8 @@
             seccion: seccionVal,
             porcentaje: rawPct,
             porcentajeNum: isNaN(pNum) ? 0 : pNum,
-            buenas: row[bIdx] !== undefined ? row[bIdx] : "--",
-            incorrectas: row[iIdx] !== undefined ? row[iIdx] : "--",
+            buenas: !isNaN(buenasNum) ? buenasNum : buenasStr,
+            incorrectas: valIncorrectas,
             tiempo: row[tIdx] || "--",
             codigo: (cIdx !== -1 && row[cIdx]) ? String(row[cIdx]).trim() : "",
             respuestas: parseStudentAnswers(rawResp)
