@@ -125,6 +125,11 @@
     }
 
     /* Estilos del Reporte del Docente */
+    .teacher-report-modal {
+      align-items: flex-start;
+      padding: 25px 12px;
+      overflow-y: auto;
+    }
     .teacher-report-modal-content {
       max-width: 1000px;
       width: 96%;
@@ -134,6 +139,10 @@
       border-radius: 12px;
       padding: 1.8rem;
       box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+    .teacher-report-table-wrapper {
+      overflow-x: auto;
+      width: 100%;
     }
     .teacher-report-toolbar {
       display: flex;
@@ -1483,31 +1492,111 @@
         color: #ffffff !important;
       }
 
-      /* Modo Impresión del Reporte del Docente */
+      /* ==================== MODO IMPRESIÓN DEL REPORTE DEL DOCENTE ==================== */
+      body.teacher-report-print-mode {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+      }
       body.teacher-report-print-mode main,
       body.teacher-report-print-mode header,
       body.teacher-report-print-mode .exam-cover-page,
-      body.teacher-report-print-mode .print-page-table {
+      body.teacher-report-print-mode .print-page-table,
+      body.teacher-report-print-mode .teacher-viewing-banner,
+      body.teacher-report-print-mode .no-print-report {
         display: none !important;
       }
       body.teacher-report-print-mode #teacherReportModal {
         display: block !important;
         position: static !important;
+        inset: auto !important;
         background: transparent !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-y: visible !important;
+        overflow-x: visible !important;
       }
       body.teacher-report-print-mode .teacher-report-modal-content {
+        display: block !important;
         box-shadow: none !important;
         border: none !important;
+        border-radius: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-y: visible !important;
+        overflow-x: visible !important;
       }
-      body.teacher-report-print-mode .no-print-report {
-        display: none !important;
+      body.teacher-report-print-mode .teacher-report-table-wrapper,
+      body.teacher-report-print-mode div:has(> .teacher-report-table) {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        display: block !important;
+        margin-bottom: 0.5rem !important;
+      }
+      body.teacher-report-print-mode .teacher-report-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        overflow: visible !important;
+        border-radius: 0 !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        font-size: 0.82rem !important;
+      }
+      body.teacher-report-print-mode .teacher-report-table thead {
+        display: table-header-group !important;
+      }
+      body.teacher-report-print-mode .teacher-report-table tbody {
+        display: table-row-group !important;
+      }
+      body.teacher-report-print-mode .teacher-report-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      body.teacher-report-print-mode .teacher-report-table th,
+      body.teacher-report-print-mode .teacher-report-table td {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        padding: 0.35rem 0.3rem !important;
+      }
+      body.teacher-report-print-mode .cover-header,
+      body.teacher-report-print-mode .cover-title-box,
+      body.teacher-report-print-mode .teacher-kpi-grid {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      body.teacher-report-print-mode .teacher-kpi-grid {
+        margin-bottom: 0.8rem !important;
+        gap: 0.5rem !important;
+      }
+      body.teacher-report-print-mode .teacher-kpi-card {
+        padding: 0.4rem 0.5rem !important;
+      }
+      body.teacher-report-print-mode .teacher-kpi-val {
+        font-size: 1.15rem !important;
+      }
+      body.teacher-report-print-mode .cover-signatures-box {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 1.5rem !important;
       }
     }
   </style>
@@ -1887,7 +1976,7 @@
   </div>
 
   <!-- Modal / Pantalla del Reporte Consolidado del Profesor -->
-  <div id="teacherReportModal" class="modal" style="align-items: flex-start; padding: 25px 12px; overflow-y: auto;">
+  <div id="teacherReportModal" class="modal teacher-report-modal">
     <div class="teacher-report-modal-content" id="teacherReportPrintArea">
       
       <!-- Barra de herramientas (visible en pantalla, oculta en impresión) -->
@@ -1979,7 +2068,7 @@
       </div>
 
       <!-- Tabla de Resultados Exclusiva con las 7 Columnas Solicitadas -->
-      <div style="overflow-x: auto;">
+      <div class="teacher-report-table-wrapper">
         <table class="teacher-report-table">
           <thead>
             <tr>
@@ -3738,18 +3827,19 @@
     }
 
     function printTeacherReport() {
+      const originalTitle = document.title;
+      document.title = "Reporte_Docente_Resultados_Simulacro_2026";
       document.body.classList.add("teacher-report-print-mode");
+
       setTimeout(() => {
-        window.print();
         const cleanup = () => {
           document.body.classList.remove("teacher-report-print-mode");
+          document.title = originalTitle;
           window.removeEventListener("afterprint", cleanup);
         };
         window.addEventListener("afterprint", cleanup, { once: true });
-        setTimeout(() => {
-          document.body.classList.remove("teacher-report-print-mode");
-        }, 2500);
-      }, 200);
+        window.print();
+      }, 250);
     }
 
     let teacherNormalizedRecords = [];
@@ -4854,6 +4944,17 @@
       if (e.target === scModal) closeScoreModal();
       const rModal = document.getElementById("retrieveExamModal");
       if (e.target === rModal) closeRetrieveExamModal();
+    });
+
+    // Detectar si el modal del reporte del docente está abierto al imprimir por menú/teclado
+    window.addEventListener("beforeprint", () => {
+      const modal = document.getElementById("teacherReportModal");
+      if (modal && (modal.style.display === "flex" || modal.style.display === "block")) {
+        document.body.classList.add("teacher-report-print-mode");
+      }
+    });
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("teacher-report-print-mode");
     });
 
     // Sincronización de datos del estudiante para pantalla e impresión
