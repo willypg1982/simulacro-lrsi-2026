@@ -287,6 +287,70 @@
       color: white;
       transform: translateY(-1px);
     }
+    /* Banner Examen Oficial Concluido y Modo Práctica */
+    .cover-official-notice-box {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 1.2rem 1rem;
+      margin-bottom: 1.2rem;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15);
+    }
+    .cover-practice-active-box {
+      background: #f0fdf4;
+      border: 2px solid #10b981;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 1.2rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+    }
+    .btn-activate-practice {
+      background: #0d9488;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-activate-practice:hover {
+      background: #0f766e;
+      transform: translateY(-1px);
+    }
+    .btn-retrieve-cover-action {
+      background: #ffffff;
+      color: #1e3a8a;
+      border: 1.5px solid #93c5fd;
+      padding: 0.75rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-retrieve-cover-action:hover {
+      background: #f8fafc;
+      border-color: #3b82f6;
+    }
+    .teacher-tab-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
     .teacher-viewing-banner {
       background: #1e3a8a;
       color: #ffffff;
@@ -1674,6 +1738,41 @@
         </div>
       </div>
 
+      <!-- Aviso del Enlace Oficial Concluido -->
+      <div id="coverOfficialNoticeBox" class="cover-official-notice-box no-print">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+          <span style="font-size: 1.5rem;">🔒</span>
+          <h3 style="color: #1e3a8a; font-size: 1.15rem; font-weight: 800; margin: 0;">
+            Examen Oficial Concluido
+          </h3>
+        </div>
+        <p style="color: #334155; font-size: 0.92rem; line-height: 1.5; max-width: 650px; margin: 0 auto 0.9rem auto;">
+          El periodo oficial de recepción de respuestas para este simulacro ha concluido y sus resultados están guardados de forma segura en la <strong>Pestaña Oficial</strong>.
+          <br>Si deseas realizar el simulacro para <strong>practicar y repasar</strong> (puedes realizarlo y comprobar tus notas cuantas veces desees), haz clic en el siguiente botón:
+        </p>
+        <div style="display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
+          <button type="button" class="btn-activate-practice" onclick="activatePracticeMode()">
+            🎯 Comenzar en Modo Práctica (Intentos Libres)
+          </button>
+          <button type="button" class="btn-retrieve-cover-action" onclick="openRetrieveExamModal()">
+            📥 Descargar mi Examen Oficial Realizado
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner de confirmación cuando el Modo Práctica está activo -->
+      <div id="coverPracticeActiveBox" class="cover-practice-active-box no-print" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+          <span style="font-size: 1.4rem;">🎯</span>
+          <div>
+            <strong style="color: #0f766e; font-size: 1.05rem;">MODO PRÁCTICA FORMATIVA ACTIVO</strong>
+            <div style="font-size: 0.85rem; color: #134e4a; margin-top: 2px;">
+              Puedes responder y comprobar tus resultados cuantas veces desees. Tus notas se guardarán en la pestaña <strong>Práctica</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Datos de la Persona Estudiante -->
       <div class="cover-student-box">
         <div class="cover-field full-width">
@@ -1703,7 +1802,7 @@
           </div>
           <div class="cover-field">
             <label><strong>Convocatoria:</strong></label>
-            <span class="cover-badge-conv">Ordinaria 2026</span>
+            <span id="coverBadgeConv" class="cover-badge-conv">Ordinaria 2026</span>
           </div>
         </div>
         <div style="margin-top: 0.65rem; font-size: 0.83rem; color: #475569; display: flex; align-items: center; gap: 0.4rem;">
@@ -1715,7 +1814,7 @@
       <div class="cover-start-exam-action no-print">
         <div id="coverFormError" class="cover-error-box" style="display: none;"></div>
         <div>
-          <button type="button" class="btn-start-exam" onclick="startExamFromCover()">
+          <button type="button" id="btnStartExam" class="btn-start-exam" onclick="startExamFromCover()">
             ▶ Comenzar Examen (Ir a las preguntas)
           </button>
         </div>
@@ -1979,6 +2078,16 @@
   <div id="teacherReportModal" class="modal teacher-report-modal">
     <div class="teacher-report-modal-content" id="teacherReportPrintArea">
       
+      <!-- Selector de Pestañas: Oficial vs Práctica (visible en pantalla, oculto en impresión) -->
+      <div class="teacher-tab-bar no-print-report" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid #cbd5e1; padding-bottom: 0.4rem; flex-wrap: wrap;">
+        <button type="button" id="tabBtnOficial" class="teacher-tab-btn" onclick="switchTeacherReportTab('oficial')" style="background: #1e3a8a; color: white; border: none; box-shadow: 0 2px 4px rgba(30,58,138,0.25);">
+          📋 Resultados Oficiales (Pestaña 'Oficial')
+        </button>
+        <button type="button" id="tabBtnPractica" class="teacher-tab-btn" onclick="switchTeacherReportTab('practica')" style="background: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; border-bottom: none;">
+          🎯 Práctica Formativa (Pestaña 'Práctica' - Intentos Libres)
+        </button>
+      </div>
+
       <!-- Barra de herramientas (visible en pantalla, oculta en impresión) -->
       <div class="teacher-report-toolbar no-print-report">
         <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
@@ -2033,8 +2142,8 @@
       <div class="cover-title-box" style="text-align: center; margin-bottom: 1.2rem;">
         <h3 class="cover-institution" style="font-size: 1.3rem; color: #1e3a8a; font-weight: 800; letter-spacing: 0.5px;">LICEO RURAL SAN ISIDRO</h3>
         <p class="cover-subtitle" style="font-size: 0.85rem; color: #475569; font-weight: 600;">Dirección Regional de Educación Los Santos • Circuito Escolar 03</p>
-        <h1 class="cover-main-title" style="font-size: 1.55rem; color: #0f172a; margin: 6px 0; font-weight: 800;">REPORTE CONSOLIDADO DE RESULTADOS</h1>
-        <p class="cover-exam-type" style="font-size: 0.92rem; color: #0d9488; font-weight: 700;">Simulacro de Matemáticas 2026 • Bachillerato / MEP</p>
+        <h1 class="cover-main-title">REPORTE CONSOLIDADO DE RESULTADOS</h1>
+        <p class="cover-exam-type" id="teacherReportExamType" style="font-size: 0.92rem; color: #0d9488; font-weight: 700;">Simulacro de Matemáticas 2026 • Resultados Oficiales</p>
         <div class="cover-teacher-badge" style="display: inline-block; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.3rem 1rem; border-radius: 9999px; font-size: 0.88rem; margin-top: 6px;">
           <strong>Docente:</strong> Profesor William Pineda González
         </div>
@@ -2123,8 +2232,11 @@
         ⚠️
       </div>
       <h3 style="color: #92400e; margin-bottom: 0.4rem; font-size: 1.25rem;">Examen Incompleto</h3>
-      <p style="font-size: 0.9rem; color: #475569; margin-bottom: 0.8rem; line-height: 1.45;">
+      <p style="font-size: 0.9rem; color: #475569; margin-bottom: 0.6rem; line-height: 1.45;">
         Para obtener tu calificación y descargar el examen en PDF, debes responder <strong>todas las preguntas</strong> de la prueba.
+      </p>
+      <p style="font-size: 0.84rem; color: #b91c1c; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 0.5rem; margin-bottom: 0.8rem; line-height: 1.4; font-weight: 600;">
+        🚫 No se enviará ningún dato a la hoja de cálculo ni podrás ver tu resultado hasta responder las 60 preguntas.
       </p>
 
       <div style="display: flex; justify-content: space-around; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.7rem; margin-bottom: 0.8rem; font-size: 0.88rem;">
@@ -2236,6 +2348,9 @@
         <button type="button" onclick="downloadExamPDF()" style="background: #16a34a; color: white; padding: 0.8rem 1.4rem; font-size: 1rem; border-radius: 8px; justify-content: center; font-weight: 700; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);">
           📥 Descargar Examen en PDF con Respuestas
         </button>
+        <button type="button" id="btnModalRetryPractice" onclick="restartPracticeExam()" style="display: none; background: #0f766e; color: white; padding: 0.75rem 1.2rem; font-size: 0.95rem; border-radius: 8px; justify-content: center; font-weight: 700; box-shadow: 0 4px 10px rgba(15, 118, 110, 0.25);">
+          🔄 Realizar Otro Intento de Práctica
+        </button>
         <div style="display: flex; gap: 0.6rem;">
           <button type="button" onclick="reviewOnScreen()" style="background: #e2e8f0; color: #1e293b; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.9rem; flex: 1; justify-content: center;">
             🔍 Revisar en Pantalla
@@ -2333,6 +2448,107 @@
     // =========================================================================
     // URL de la Aplicación Web de Google Apps Script:
     const GOOGLE_SHEETS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvqMOXh50piAP-1KxXM3GrRflBc9DZXjnwzSJz46b1oen6f2EoKnufozsXV4h2hpAEIg/exec";
+
+    // =========================================================================
+    // MODO DE EVALUACIÓN: OFICIAL vs PRÁCTICA
+    // =========================================================================
+    window.currentExamTab = "Oficial";
+
+    function activatePracticeMode(autoStart = false) {
+      window.currentExamTab = "Práctica";
+
+      const noticeBox = document.getElementById("coverOfficialNoticeBox");
+      const practiceBox = document.getElementById("coverPracticeActiveBox");
+      const badgeConv = document.getElementById("coverBadgeConv");
+      const btnStart = document.getElementById("btnStartExam");
+      const errBox = document.getElementById("coverFormError");
+
+      if (noticeBox) noticeBox.style.display = "none";
+      if (practiceBox) practiceBox.style.display = "block";
+      if (errBox) errBox.style.display = "none";
+      if (badgeConv) {
+        badgeConv.textContent = "Práctica Formativa 2026";
+        badgeConv.style.background = "#0d9488";
+      }
+      if (btnStart) {
+        btnStart.innerHTML = "▶ Comenzar Examen de Práctica (Ir a las preguntas)";
+        btnStart.style.background = "linear-gradient(135deg, #0d9488, #0f766e)";
+      }
+
+      // Añadir distintivo visual en la barra de navegación del examen
+      const navHeader = document.querySelector(".header-title");
+      if (navHeader && !navHeader.innerHTML.includes("Práctica")) {
+        navHeader.innerHTML += ' <span style="font-size: 0.76rem; background: #0d9488; color: white; padding: 2px 8px; border-radius: 9999px; font-weight: 700; margin-left: 6px; vertical-align: middle;">🎯 Práctica Formativa</span>';
+      }
+
+      // Mostrar botón de reintento en el modal de nota
+      const btnRetry = document.getElementById("btnModalRetryPractice");
+      if (btnRetry) btnRetry.style.display = "inline-flex";
+
+      if (autoStart) {
+        startExamFromCover();
+      }
+    }
+
+    function restartPracticeExam() {
+      if (!confirm("¿Deseas realizar un nuevo intento de práctica?\n\n• Se limpiarán las respuestas marcadas.\n• Podrás volver a contestar el examen completo cuantas veces quieras.\n• Al comprobar nuevamente, tu nuevo resultado se enviará a la pestaña 'Práctica'.")) {
+        return;
+      }
+      closeScoreModal();
+
+      // 1. Habilitar y desmarcar todos los radios
+      document.querySelectorAll('input[type="radio"]').forEach(r => {
+        r.disabled = false;
+        r.checked = false;
+      });
+
+      // 2. Limpiar retroalimentación y estilos de revisión
+      document.querySelectorAll(".feedback").forEach(f => {
+        f.style.display = "none";
+        f.innerHTML = "";
+      });
+      document.querySelectorAll(".option-label").forEach(lbl => {
+        lbl.classList.remove("review-selected-correct", "review-selected-wrong", "review-correct-solution", "review-neutral");
+        const badge = lbl.querySelector(".review-badge");
+        if (badge) badge.remove();
+      });
+      document.querySelectorAll(".bubble").forEach(b => {
+        b.classList.remove("correct", "wrong");
+      });
+
+      // 3. Reiniciar banderas de estado y temporizador
+      window.isExamSubmitted = false;
+      window.lastExamResult = null;
+      sessionStorage.removeItem("lrsi_exam_final_duration");
+      sessionStorage.setItem("lrsi_exam_start_time", Date.now().toString());
+      sessionStorage.setItem("lrsi_exam_active", "true");
+
+      const scoreBox = document.getElementById("scoreBox");
+      if (scoreBox) scoreBox.style.display = "none";
+
+      const btnGrade = document.getElementById("btnGradeExam");
+      if (btnGrade) {
+        btnGrade.disabled = false;
+        btnGrade.style.background = "";
+        btnGrade.onclick = gradeExam;
+      }
+
+      updateNavGrid();
+      goToQuestion(1);
+    }
+
+    // Detección automática al cargar: URL con ?modo=practica, ?tab=practica o archivo practica.html
+    document.addEventListener("DOMContentLoaded", function() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPracticaParam = urlParams.get("modo") === "practica" || urlParams.get("tab") === "practica";
+        const isPracticaFile = window.location.pathname.toLowerCase().includes("practica");
+
+        if (isPracticaParam || isPracticaFile) {
+          activatePracticeMode(false);
+        }
+      } catch (e) {}
+    });
 
     // Seguimiento silencioso del tiempo de examen (se inicia al pulsar Comenzar Examen)
     // Limpiar cualquier marca de tiempo residual de sesiones anteriores SOLO si no hay un examen ya concluido
@@ -3549,6 +3765,30 @@
         const pct = ((answeredCount / 60) * 100).toFixed(1);
         bar.style.width = `${pct}%`;
       }
+
+      // Actualizar dinámicamente el botón Comprobar superior
+      const btnGrade = document.getElementById("btnGradeExam");
+      if (btnGrade && !window.isExamSubmitted) {
+        if (answeredCount === 60) {
+          btnGrade.innerHTML = "✔ Comprobar Examen (60/60)";
+          btnGrade.style.background = "linear-gradient(135deg, #16a34a, #15803d)";
+          btnGrade.title = "¡Todas las 60 preguntas contestadas! Haz clic para calificar y guardar tu examen.";
+        } else {
+          btnGrade.innerHTML = `✔ Comprobar (${answeredCount}/60)`;
+          btnGrade.style.background = "";
+          btnGrade.title = `Debes contestar las 60 preguntas para comprobar (${60 - answeredCount} pendientes).`;
+        }
+      }
+
+      // Actualizar botón de navegación en la pregunta 60
+      const btnNext = document.getElementById("btnNextQ");
+      if (btnNext && currentQuestionIndex === 60 && !window.isExamSubmitted) {
+        if (answeredCount === 60) {
+          btnNext.innerHTML = "✔ Comprobar Examen (60/60)";
+        } else {
+          btnNext.innerHTML = `✔ Comprobar (${answeredCount}/60)`;
+        }
+      }
     }
 
     function goToQuestion(n) {
@@ -3583,7 +3823,8 @@
       const btnNext = document.getElementById("btnNextQ");
       if (btnNext) {
         if (n === 60) {
-          btnNext.innerHTML = "✔ Comprobar";
+          const answeredCount = questionsData.filter(q => !!document.querySelector(`input[name="q${q.id}"]:checked`)).length;
+          btnNext.innerHTML = (answeredCount === 60) ? "✔ Comprobar Examen (60/60)" : `✔ Comprobar (${answeredCount}/60)`;
           btnNext.className = "btn-nav-action finish";
         } else {
           btnNext.innerHTML = "Siguiente ➡";
@@ -3826,9 +4067,60 @@
       if (modal) modal.style.display = "none";
     }
 
+    let currentTeacherTab = "oficial";
+
+    function switchTeacherReportTab(tab) {
+      currentTeacherTab = (tab === "practica") ? "practica" : "oficial";
+
+      const btnOficial = document.getElementById("tabBtnOficial");
+      const btnPractica = document.getElementById("tabBtnPractica");
+      const titleType = document.getElementById("teacherReportExamType");
+
+      if (currentTeacherTab === "oficial") {
+        if (btnOficial) {
+          btnOficial.style.background = "#1e3a8a";
+          btnOficial.style.color = "white";
+          btnOficial.style.border = "none";
+          btnOficial.style.boxShadow = "0 2px 4px rgba(30,58,138,0.25)";
+        }
+        if (btnPractica) {
+          btnPractica.style.background = "#f1f5f9";
+          btnPractica.style.color = "#475569";
+          btnPractica.style.border = "1.5px solid #cbd5e1";
+          btnPractica.style.borderBottom = "none";
+          btnPractica.style.boxShadow = "none";
+        }
+        if (titleType) {
+          titleType.innerText = "Simulacro de Matemáticas 2026 • Resultados Oficiales (Pestaña 'Oficial')";
+          titleType.style.color = "#1e3a8a";
+        }
+      } else {
+        if (btnPractica) {
+          btnPractica.style.background = "#0f766e";
+          btnPractica.style.color = "white";
+          btnPractica.style.border = "none";
+          btnPractica.style.boxShadow = "0 2px 4px rgba(15,118,110,0.25)";
+        }
+        if (btnOficial) {
+          btnOficial.style.background = "#f1f5f9";
+          btnOficial.style.color = "#475569";
+          btnOficial.style.border = "1.5px solid #cbd5e1";
+          btnOficial.style.borderBottom = "none";
+          btnOficial.style.boxShadow = "none";
+        }
+        if (titleType) {
+          titleType.innerText = "Simulacro de Matemáticas 2026 • Práctica Formativa (Pestaña 'Práctica' - Intentos Libres)";
+          titleType.style.color = "#0f766e";
+        }
+      }
+
+      loadTeacherReportData(true);
+    }
+
     function printTeacherReport() {
       const originalTitle = document.title;
-      document.title = "Reporte_Docente_Resultados_Simulacro_2026";
+      const isPractica = currentTeacherTab === "practica";
+      document.title = isPractica ? "Reporte_Docente_Resultados_Practica_Simulacro_2026" : "Reporte_Docente_Resultados_Oficiales_Simulacro_2026";
       document.body.classList.add("teacher-report-print-mode");
 
       setTimeout(() => {
@@ -3847,11 +4139,16 @@
     async function loadTeacherReportData(forceLive = false) {
       const statusEl = document.getElementById("teacherReportStatus");
       const notice = document.getElementById("teacherScriptNotice");
+      const isPractica = currentTeacherTab === "practica";
 
       // 1. Obtener registros guardados en la memoria del navegador
       let localRecords = [];
       try {
-        localRecords = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+        const allLocal = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+        localRecords = allLocal.filter(r => {
+          if (isPractica) return r.tab === "Práctica" || r.isPractica;
+          return !r.tab || r.tab === "Oficial" || !r.isPractica;
+        });
       } catch (e) {
         localRecords = [];
       }
@@ -3863,7 +4160,7 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="9" style="padding: 2.5rem 1rem; color: #0284c7; font-weight: 600; text-align: center;">
-                ⏳ Conectando en tiempo real con Google Sheets... Por favor espera unos segundos.
+                ⏳ Conectando en tiempo real con Google Sheets (Pestaña: <strong>${isPractica ? 'Práctica' : 'Oficial'}</strong>)... Por favor espera unos segundos.
               </td>
             </tr>
           `;
@@ -3873,9 +4170,9 @@
       }
 
       if (statusEl) {
-        statusEl.innerHTML = "⏳ Conectando con Google Sheets en tiempo real...";
-        statusEl.style.color = "#0369a1";
-        statusEl.style.background = "#e0f2fe";
+        statusEl.innerHTML = `⏳ Conectando con Google Sheets (${isPractica ? 'Práctica' : 'Oficial'})...`;
+        statusEl.style.color = isPractica ? "#0f766e" : "#0369a1";
+        statusEl.style.background = isPractica ? "#ccfbf1" : "#e0f2fe";
       }
 
       // 2. Consultar Google Sheets en vivo con parámetro anti-caché y tiempo límite de 35 segundos
@@ -3888,7 +4185,7 @@
           const timerId = setTimeout(() => controller.abort(), 35000);
 
           const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
+          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}&tab=${currentTeacherTab}`;
 
           const resp = await fetch(freshUrl, {
             method: "GET",
@@ -3919,14 +4216,9 @@
 
         parseAndRenderTeacherRecords(fetchedRows, localRecords, true);
 
-        // Sincronizar memoria local con los registros reales de Google Sheets
-        try {
-          localStorage.setItem("lrsi_saved_results", JSON.stringify(teacherNormalizedRecords));
-        } catch(e) {}
-
         if (statusEl) {
           const rowCount = Math.max(0, fetchedRows.length > 1 ? fetchedRows.length - 1 : 0);
-          statusEl.innerHTML = `✔ Sincronizado en vivo con Google Sheets (${rowCount} estudiante${rowCount === 1 ? '' : 's'})`;
+          statusEl.innerHTML = `✔ Sincronizado en vivo [Pestaña: ${isPractica ? 'Práctica' : 'Oficial'}] (${rowCount} estudiante${rowCount === 1 ? '' : 's'})`;
           statusEl.style.color = "#15803d";
           statusEl.style.background = "#dcfce7";
         }
@@ -4321,7 +4613,7 @@
       if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         try {
           const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-          const cleanUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=cleanDuplicates&t=${Date.now()}`;
+          const cleanUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=cleanDuplicates&tab=${currentTeacherTab}&t=${Date.now()}`;
           const res = await fetch(cleanUrl, { method: "GET", redirect: "follow" });
           if (res.ok) {
             const data = await res.json();
@@ -4337,8 +4629,15 @@
     }
 
     async function clearTeacherLocalStorage() {
-      if (confirm("¿Deseas vaciar los registros de prueba guardados en la memoria de este navegador?\n\n✔ Tu Hoja de Google Sheets NO se verá afectada.\n✔ Se eliminarán las pruebas viejas guardadas localmente en esta computadora.")) {
-        localStorage.removeItem("lrsi_saved_results");
+      const isPractica = currentTeacherTab === "practica";
+      if (confirm(`¿Deseas vaciar los registros de ${isPractica ? 'Práctica' : 'Oficial'} guardados en la memoria de este navegador?\n\n✔ Tu Hoja de Google Sheets NO se verá afectada.\n✔ Se eliminarán las pruebas viejas guardadas localmente en esta computadora.`)) {
+        try {
+          let saved = JSON.parse(localStorage.getItem("lrsi_saved_results") || "[]");
+          saved = saved.filter(r => isPractica ? (!r.isPractica && r.tab !== "Práctica") : (r.isPractica || r.tab === "Práctica"));
+          localStorage.setItem("lrsi_saved_results", JSON.stringify(saved));
+        } catch (e) {
+          localStorage.removeItem("lrsi_saved_results");
+        }
         teacherNormalizedRecords = [];
         await loadTeacherReportData(true);
       }
@@ -4348,7 +4647,7 @@
       const rec = currentFilteredTeacherRecords[idx];
       if (!rec) return;
 
-      if (!confirm(`¿Deseas eliminar definitivamente el reporte de "${rec.estudiante}"?\n\n✔ Se eliminará de esta lista.\n✔ Se eliminará de la Hoja de Google Sheets en la nube.`)) {
+      if (!confirm(`¿Deseas eliminar definitivamente el reporte de "${rec.estudiante}"?\n\n✔ Se eliminará de esta lista.\n✔ Se eliminará de la Hoja de Google Sheets en la nube [Pestaña: ${currentTeacherTab}].`)) {
         return;
       }
 
@@ -4378,12 +4677,12 @@
       if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         try {
           const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-          const deleteUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=delete&estudiante=${encodeURIComponent(rec.estudiante)}&fecha=${encodeURIComponent(rec.fecha || "")}&t=${Date.now()}`;
+          const deleteUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=delete&tab=${currentTeacherTab}&estudiante=${encodeURIComponent(rec.estudiante)}&fecha=${encodeURIComponent(rec.fecha || "")}&t=${Date.now()}`;
           
           await fetch(deleteUrl, { method: "GET", redirect: "follow" });
           
           if (statusEl) {
-            statusEl.innerHTML = `✔ ${rec.estudiante} eliminado de Google Sheets`;
+            statusEl.innerHTML = `✔ ${rec.estudiante} eliminado de Google Sheets (${currentTeacherTab})`;
             statusEl.style.color = "#15803d";
             statusEl.style.background = "#dcfce7";
           }
@@ -4396,11 +4695,12 @@
               headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({
                 action: "delete",
+                tab: currentTeacherTab,
                 estudiante: rec.estudiante,
-                fecha: rec.fecha
+                fecha: rec.fecha || ""
               })
             });
-          } catch(e) {}
+          } catch (postErr) {}
         }
       }
     }
@@ -4778,11 +5078,13 @@
       if (GOOGLE_SHEETS_SCRIPT_URL && !GOOGLE_SHEETS_SCRIPT_URL.includes("TU_URL_AQUI")) {
         try {
           const sep = GOOGLE_SHEETS_SCRIPT_URL.includes("?") ? "&" : "?";
-          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}t=${Date.now()}`;
+          const freshUrl = `${GOOGLE_SHEETS_SCRIPT_URL}${sep}action=search&query=${encodeURIComponent(query)}&t=${Date.now()}`;
           const res = await fetch(freshUrl, { method: "GET", redirect: "follow" });
           if (res.ok) {
             const data = await res.json();
-            if (data && Array.isArray(data.data) && data.data.length > 1) {
+            if (data && Array.isArray(data.matches) && data.matches.length > 0) {
+              data.matches.forEach(m => allMatches.push(m));
+            } else if (data && Array.isArray(data.data) && data.data.length > 1) {
               const rows = data.data;
               const headers = rows[0].map(h => String(h).trim().toLowerCase());
               let codeIdx = headers.findIndex(h => /c[oó]digo|clave/.test(h));
@@ -5025,6 +5327,15 @@
       const secInput = document.getElementById("studentSectionInput");
       const dateInput = document.getElementById("studentDateInput");
       const errBox = document.getElementById("coverFormError");
+
+      // Validar si el examen oficial ha concluido y el estudiante no ha activado el modo práctica
+      if (window.currentExamTab !== "Práctica") {
+        if (errBox) {
+          errBox.innerHTML = `⚠️ <strong>El examen oficial ya ha concluido.</strong><br>El periodo oficial de recepción de respuestas está cerrado. Para realizar el simulacro y evaluar tus respuestas debes ingresar en <strong>Modo Práctica Formativa</strong>.<br><button type="button" class="btn-activate-practice" style="margin-top: 0.6rem; font-size: 0.9rem; padding: 0.45rem 1rem;" onclick="activatePracticeMode(true)">🎯 Iniciar en Modo Práctica Ahora</button>`;
+          errBox.style.display = "inline-block";
+        }
+        return;
+      }
 
       const nameVal = nameInput ? nameInput.value.trim() : "";
       const codeVal = codeInput ? codeInput.value.trim() : "";
@@ -5527,7 +5838,9 @@
         preguntasIncorrectas: wrongQuestions.length > 0 ? wrongQuestions.join(", ") : "Ninguna",
         respuestas: answersMap,
         respuestasStr: JSON.stringify(answersMap),
-        respuestasDetalladas: Object.entries(answersMap).map(([id, a]) => `${id}:${a}`).join(", ")
+        respuestasDetalladas: Object.entries(answersMap).map(([id, a]) => `${id}:${a}`).join(", "),
+        tab: window.currentExamTab || "Práctica",
+        isPractica: (window.currentExamTab === "Práctica")
       };
 
       sendResultsToGoogleSheets(payload);
